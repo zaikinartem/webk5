@@ -1,0 +1,27 @@
+# Node.js (React)
+node_modules/
+dist/
+.vite/
+.env
+
+# Java / Maven
+target/
+*.class
+*.war
+*.log
+
+# NetBeans
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# IntelliJ IDEA (если используешь)
+.idea/
+*.iml
+
+# ОС
+.DS_Store
+Thumbs.db

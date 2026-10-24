@@ -1,0 +1,9 @@
+com\datingsite\model\Role.class
+com\datingsite\servlet\AuthServlet.class
+com\datingsite\servlet\ProfileServlet.class
+com\datingsite\filter\AuthFilter.class
+com\datingsite\listener\VisitorCounterListener.class
+com\datingsite\servlet\InfoServlet.class
+com\datingsite\model\User.class
+com\datingsite\servlet\RegisterServlet.class
+com\datingsite\util\DatabaseConnection.class
