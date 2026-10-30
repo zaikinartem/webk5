@@ -20,17 +20,25 @@ public class InfoServlet extends HttpServlet {
 
     /** Формат даты и времени для вывода. */
     private static final String DATE_FORMAT = "dd.MM.yyyy HH:mm:ss";
-    
+
     /** Ключ сессии для отслеживания уникального визита. */
     private static final String VISITED_KEY = "visited";
 
+    /** Кодировка ответа. */
+    private static final String CONTENT_TYPE = "application/json;charset=UTF-8";
+
     /**
-     * Обрабатывает GET-запрос. Увеличивает счетчик только при первом визите пользователя.
+     * Обрабатывает GET-запрос. Увеличивает счетчик только при первом визите
+     * пользователя в рамках текущей сессии.
+     *
+     * @param req  объект запроса
+     * @param resp объект ответа
+     * @throws IOException при ошибках ввода-вывода
      */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        resp.setContentType("application/json;charset=UTF-8");
-        
+        resp.setContentType(CONTENT_TYPE);
+
         HttpSession session = req.getSession(false);
         if (session == null || session.getAttribute(VISITED_KEY) == null) {
             VisitorCounterListener.incrementAndGet();

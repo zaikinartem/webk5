@@ -2,6 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 
+/**
+ * Компонент главной страницы.
+ * Запрашивает у сервера текущее время и количество посещений.
+ *
+ * @returns {JSX.Element} JSX-разметка главной страницы
+ */
 export default function Home() {
     const [info, setInfo] = useState({ dateTime: '', visitCount: 0 });
 

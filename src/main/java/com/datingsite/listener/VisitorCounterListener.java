@@ -7,15 +7,20 @@ import java.io.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Слушатель жизненного цикла контекста для сохранения и загрузки счетчика посещений.
+ * Слушатель жизненного цикла контекста для сохранения и загрузки счетчика
+ * посещений.
  */
 @WebListener
 public class VisitorCounterListener implements ServletContextListener {
 
-    /** Имя файла для сохранения состояния счетчика. */
+    /**
+     * Имя файла для сохранения состояния счетчика.
+     */
     private static final String COUNTER_FILE = "visitor_counter.txt";
 
-    /** Атомарный счетчик посещений. */
+    /**
+     * Атомарный счетчик посещений.
+     */
     private static final AtomicInteger counter = new AtomicInteger(0);
 
     @Override
@@ -44,6 +49,7 @@ public class VisitorCounterListener implements ServletContextListener {
 
     /**
      * Увеличивает счетчик посещений на единицу.
+     *
      * @return новое значение счетчика
      */
     public static int incrementAndGet() {
@@ -52,6 +58,7 @@ public class VisitorCounterListener implements ServletContextListener {
 
     /**
      * Возвращает текущее значение счетчика без его изменения.
+     *
      * @return текущее количество посещений
      */
     public static int getCounter() {

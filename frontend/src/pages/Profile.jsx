@@ -2,14 +2,22 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
+/** Максимальный размер файла в байтах (5 МБ). */
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+/** Время отображения уведомления (в миллисекундах). */
+const TOAST_DURATION_MS = 3000;
+
 /**
  * Компонент личного кабинета пользователя.
- * Отображает данные профиля, позволяет обновить аватар (с Toast-уведомлением) и выйти.
+ * Отображает данные профиля, позволяет обновить аватар (с проверкой размера и типа) и выйти.
+ *
+ * @returns {JSX.Element} JSX-разметка личного кабинета
  */
 export default function Profile() {
     const [user, setUser] = useState(null);
     const [file, setFile] = useState(null);
-    const [notification, setNotification] = useState(null); 
+    const [notification, setNotification] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -25,18 +33,54 @@ export default function Profile() {
     }, [navigate]);
 
     /**
-     * Показывает всплывающее уведомление на 3 секунды.
+     * Показывает всплывающее уведомление.
      * @param {string} message текст сообщения
      * @param {string} type тип ('success' или 'error')
      */
     const showToast = (message, type) => {
         setNotification({ message, type });
-        setTimeout(() => setNotification(null), 3000);
+        setTimeout(() => setNotification(null), TOAST_DURATION_MS);
     };
 
+    /**
+     * Обрабатывает выбор файла и валидирует его перед отправкой.
+     * @param {Event} e событие выбора файла
+     */
+    const handleFileChange = (e) => {
+        const selectedFile = e.target.files[0];
+        if (!selectedFile) {
+            setFile(null);
+            return;
+        }
+
+        if (!selectedFile.type.startsWith('image/')) {
+            showToast('Пожалуйста, выберите файл изображения (JPG, PNG и т.д.).', 'error');
+            e.target.value = null;
+            setFile(null);
+            return;
+        }
+
+        if (selectedFile.size > MAX_FILE_SIZE) {
+            showToast('Файл слишком большой. Максимальный размер: 5 МБ.', 'error');
+            e.target.value = null;
+            setFile(null);
+            return;
+        }
+
+        setFile(selectedFile);
+    };
+
+    /**
+     * Отправляет выбранный файл на сервер.
+     * @param {Event} e событие отправки формы
+     */
     const handleUpload = (e) => {
         e.preventDefault();
-        if (!file) return;
+        
+        if (!file) {
+            showToast('Сначала выберите файл для загрузки.', 'error');
+            return;
+        }
 
         const formData = new FormData();
         formData.append('file', file);
@@ -46,14 +90,19 @@ export default function Profile() {
         }).then(response => {
             if (response.data.success) {
                 setUser(prev => ({ ...prev, avatarPath: response.data.avatarPath }));
-                showToast('Фото профиля успешно обновлено!', 'success'); 
-                setFile(null); // Очищаем выбор файла
+                showToast('Фото профиля успешно обновлено!', 'success');
+                setFile(null);
+                e.target.reset();
             }
-        }).catch(() => {
-            showToast('Ошибка при загрузке файла. Проверьте размер.', 'error'); 
+        }).catch((error) => {
+            const message = error.response?.data?.error || 'Ошибка при загрузке файла.';
+            showToast(message, 'error');
         });
     };
 
+    /**
+     * Выполняет выход из системы и перенаправляет на главную.
+     */
     const handleLogout = () => {
         api.delete('/auth').then(() => navigate('/'));
     };
@@ -63,7 +112,6 @@ export default function Profile() {
     return (
         <div style={{ padding: '30px', fontFamily: 'Arial', maxWidth: '500px', margin: '0 auto', position: 'relative' }}>
             
-            {/* Toast-уведомление */}
             {notification && (
                 <div style={{
                     position: 'fixed', top: '20px', right: '20px',
@@ -91,7 +139,7 @@ export default function Profile() {
             </div>
 
             <form onSubmit={handleUpload} style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '20px' }}>
-                <input type="file" onChange={e => setFile(e.target.files[0])} accept="image/*" />
+                <input type="file" onChange={handleFileChange} accept="image/*" />
                 <button type="submit" style={{ width: 'auto', marginTop: 0 }}>Загрузить</button>
             </form>
 

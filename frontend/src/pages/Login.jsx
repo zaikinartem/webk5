@@ -2,9 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 
+/** Время задержки перед редиректом (в миллисекундах). Необходимо для сохранения куки сессии. */
+const REDIRECT_DELAY_MS = 200;
+
 /**
  * Компонент страницы авторизации.
  * Отправляет данные на сервер и обрабатывает ответ без использования alert().
+ *
+ * @returns {JSX.Element} JSX-разметка страницы входа
  */
 export default function Login() {
     const [username, setUsername] = useState('');
@@ -12,6 +17,10 @@ export default function Login() {
     const [errorMsg, setErrorMsg] = useState(''); 
     const navigate = useNavigate();
 
+    /**
+     * Обрабатывает отправку формы входа.
+     * @param {Event} e событие отправки формы
+     */
     const handleLogin = (e) => {
         e.preventDefault();
         setErrorMsg(''); 
@@ -25,11 +34,10 @@ export default function Login() {
                 if (response.data.success) {
                     setTimeout(() => {
                         navigate('/profile');
-                    }, 200);
+                    }, REDIRECT_DELAY_MS);
                 }
             })
             .catch((error) => {
-               
                 const message = error.response?.data?.message || 'Ошибка соединения с сервером.';
                 setErrorMsg(message); 
             });
@@ -39,7 +47,6 @@ export default function Login() {
         <div style={{ padding: '30px', maxWidth: '400px', margin: '0 auto', fontFamily: 'Arial' }}>
             <h2>🔑 Авторизация</h2>
             
-            {/* Вывод ошибки в аккуратном красном блоке */}
             {errorMsg && (
                 <div style={{ color: '#dc3545', background: '#f8d7da', padding: '10px', borderRadius: '5px', marginBottom: '15px' }}>
                     {errorMsg}

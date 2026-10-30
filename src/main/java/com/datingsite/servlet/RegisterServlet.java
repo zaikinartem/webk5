@@ -21,17 +21,21 @@ import java.sql.SQLException;
 @WebServlet("/api/register")
 public class RegisterServlet extends HttpServlet {
 
-    /** SQL-запрос для добавления нового пользователя. */
+    /**
+     * SQL-запрос для добавления нового пользователя.
+     */
     private static final String SQL_INSERT = "INSERT INTO users (username, password, role, avatar_path) VALUES (?, ?, ?, ?)";
-    
-    /** Путь к аватару по умолчанию. */
+
+    /**
+     * Путь к аватару по умолчанию.
+     */
     private static final String DEFAULT_AVATAR = "/uploads/default.jpg";
 
     /**
-     * Обрабатывает POST-запрос для регистрации пользователя.
-     * Роль всегда назначается как {@link Role#USER}.
+     * Обрабатывает POST-запрос для регистрации пользователя. Роль всегда
+     * назначается как {@link Role#USER}.
      *
-     * @param req  объект запроса
+     * @param req объект запроса
      * @param resp объект ответа
      * @throws IOException при ошибках ввода-вывода
      */
@@ -50,14 +54,13 @@ public class RegisterServlet extends HttpServlet {
             return;
         }
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(SQL_INSERT)) {
+        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(SQL_INSERT)) {
 
             pstmt.setString(1, username.trim());
             pstmt.setString(2, password.trim());
             pstmt.setString(3, Role.USER.name()); // Всегда USER!
             pstmt.setString(4, DEFAULT_AVATAR);
-            
+
             pstmt.executeUpdate();
 
             User user = new User();
@@ -71,7 +74,7 @@ public class RegisterServlet extends HttpServlet {
             out.print(String.format(
                     "{\"success\":true, \"username\":\"%s\", \"role\":\"%s\", \"avatarPath\":\"%s\"}",
                     user.getUsername(), user.getRole(), user.getAvatarPath()));
-                    
+
         } catch (SQLException e) {
             resp.setStatus(HttpServletResponse.SC_CONFLICT); // 409 Conflict
             // Проверяем код ошибки дубликата (23505 для PostgreSQL)

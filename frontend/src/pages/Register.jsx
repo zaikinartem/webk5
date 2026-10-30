@@ -2,9 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 
+/** Время задержки перед редиректом (в миллисекундах). Необходимо для сохранения куки сессии. */
+const REDIRECT_DELAY_MS = 200;
+
 /**
  * Компонент страницы регистрации.
  * Всегда создает пользователей с ролью USER, обрабатывает ошибки валидации.
+ *
+ * @returns {JSX.Element} JSX-разметка страницы регистрации
  */
 export default function Register() {
     const [username, setUsername] = useState('');
@@ -12,6 +17,10 @@ export default function Register() {
     const [errorMsg, setErrorMsg] = useState(''); 
     const navigate = useNavigate();
 
+    /**
+     * Обрабатывает отправку формы регистрации.
+     * @param {Event} e событие отправки формы
+     */
     const handleRegister = (e) => {
         e.preventDefault();
         setErrorMsg('');
@@ -25,7 +34,7 @@ export default function Register() {
                 if (response.data.success) {
                     setTimeout(() => {
                         navigate('/profile');
-                    }, 200);
+                    }, REDIRECT_DELAY_MS);
                 }
             })
             .catch((error) => {

@@ -1,24 +1,23 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+const backend = 'http://localhost:8080/webk5-1.0-SNAPSHOT'
+
 export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080/webk5',
+        target: backend,
         changeOrigin: true,
-        secure: false,
-        // ЭТИ ДВЕ СТРОЧКИ КРИТИЧНЫ ДЛЯ КУК!
-        cookieDomainRewrite: "localhost", 
-        cookiePathRewrite: "/"
+        cookieDomainRewrite: 'localhost',
+        cookiePathRewrite: '/',
       },
       '/uploads': {
-        target: 'http://localhost:8080/webk5',
+        target: backend,
         changeOrigin: true,
-        secure: false
-      }
-    }
-  }
+      },
+    },
+  },
 })

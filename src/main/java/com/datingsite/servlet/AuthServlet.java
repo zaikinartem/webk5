@@ -17,21 +17,26 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
- * Сервлет для аутентификации пользователей, проверки сессии и выхода из системы.
+ * Сервлет для аутентификации пользователей, проверки сессии и выхода из
+ * системы.
  */
 @WebServlet("/api/auth")
 public class AuthServlet extends HttpServlet {
 
-    /** SQL-запрос для поиска пользователя по логину и паролю. */
+    /**
+     * SQL-запрос для поиска пользователя по логину и паролю.
+     */
     private static final String SQL_LOGIN = "SELECT * FROM users WHERE username = ? AND password = ?";
-    
-    /** Путь к аватару по умолчанию. */
+
+    /**
+     * Путь к аватару по умолчанию.
+     */
     private static final String DEFAULT_AVATAR = "/uploads/default.jpg";
 
     /**
      * Обрабатывает POST-запрос для входа в систему.
      *
-     * @param req  объект запроса
+     * @param req объект запроса
      * @param resp объект ответа
      * @throws IOException при ошибках ввода-вывода
      */
@@ -50,8 +55,7 @@ public class AuthServlet extends HttpServlet {
             return;
         }
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(SQL_LOGIN)) {
+        try (Connection conn = DatabaseConnection.getConnection(); PreparedStatement pstmt = conn.prepareStatement(SQL_LOGIN)) {
 
             pstmt.setString(1, username);
             pstmt.setString(2, password);
@@ -59,7 +63,7 @@ public class AuthServlet extends HttpServlet {
 
             if (rs.next()) {
                 User user = new User();
-                user.setId(rs.getLong("id"));
+                user.setId(rs.getInt("id"));
                 user.setUsername(rs.getString("username"));
                 user.setPassword(rs.getString("password"));
                 user.setRole(Role.valueOf(rs.getString("role")));
@@ -86,7 +90,7 @@ public class AuthServlet extends HttpServlet {
     /**
      * Обрабатывает GET-запрос для проверки текущей сессии.
      *
-     * @param req  объект запроса
+     * @param req объект запроса
      * @param resp объект ответа
      * @throws IOException при ошибках ввода-вывода
      */
@@ -111,7 +115,7 @@ public class AuthServlet extends HttpServlet {
     /**
      * Обрабатывает DELETE-запрос для выхода из системы (уничтожения сессии).
      *
-     * @param req  объект запроса
+     * @param req объект запроса
      * @param resp объект ответа
      * @throws IOException при ошибках ввода-вывода
      */

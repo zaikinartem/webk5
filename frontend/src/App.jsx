@@ -5,6 +5,12 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 
+/**
+ * Корневой компонент приложения.
+ * Отвечает за маршрутизацию (Routing) между страницами.
+ *
+ * @returns {JSX.Element} JSX-разметка приложения
+ */
 export default function App() {
     return (
         <Router>
