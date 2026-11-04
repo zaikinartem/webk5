@@ -17,12 +17,11 @@ public class DatabaseConnection {
     
     /** Пароль пользователя базы данных. */
     private static final String PASSWORD = "28032007";
-    
-    /**
-     * Конструктор по умолчанию
-     */
-    public DatabaseConnection(){}
 
+    /**
+     * Статический блок инициализации.
+     * Загружает драйвер JDBC для PostgreSQL при первом обращении к классу.
+     */
     static {
         try {
             Class.forName("org.postgresql.Driver");
@@ -30,6 +29,11 @@ public class DatabaseConnection {
             e.printStackTrace();
         }
     }
+
+    /**
+     * Приватный конструктор для предотвращения создания экземпляров утилитарного класса.
+     */
+    private DatabaseConnection() {}
 
     /**
      * Создает и возвращает новое подключение к базе данных.

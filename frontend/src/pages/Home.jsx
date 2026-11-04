@@ -1,37 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import api from '../services/api';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 /**
- * Компонент главной страницы.
- * Запрашивает у сервера текущее время и количество посещений.
+ * Компонент главной страницы, выполняющий перенаправление на новостную ленту.
  *
- * @returns {JSX.Element} JSX-разметка главной страницы
+ * @returns {JSX.Element} Сообщение о перенаправлении
  */
 export default function Home() {
-    const [info, setInfo] = useState({ dateTime: '', visitCount: 0 });
+    const navigate = useNavigate();
 
     useEffect(() => {
-        api.get('/info')
-            .then(response => setInfo(response.data))
-            .catch(error => console.error('Ошибка загрузки информации:', error));
-    }, []);
+        navigate('/news');
+    }, [navigate]);
 
-    return (
-        <div className="container">
-            <h1>❤️ LoveConnect</h1>
-            <p>Лучший портал для поиска второй половинки!</p>
-            
-            <div className="info-card">
-                <h3>📅 Статус сервера</h3>
-                <p><strong>Время:</strong> {info.dateTime || 'Загрузка...'}</p>
-                <p><strong>Посещений:</strong> {info.visitCount}</p>
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px' }}>
-                <Link to="/login" style={{ width: '100%' }}><button>Войти</button></Link>
-                <Link to="/register" style={{ width: '100%' }}><button style={{ background: '#6c757d' }}>Регистрация</button></Link>
-            </div>
-        </div>
-    );
+    return <div style={{ padding: '30px', textAlign: 'center' }}>Перенаправление на новости...</div>;
 }

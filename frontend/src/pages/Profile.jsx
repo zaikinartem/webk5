@@ -10,7 +10,7 @@ const TOAST_DURATION_MS = 3000;
 
 /**
  * Компонент личного кабинета пользователя.
- * Отображает данные профиля, позволяет обновить аватар (с проверкой размера и типа) и выйти.
+ * Отображает данные профиля, позволяет обновить аватар и перейти в другие разделы.
  *
  * @returns {JSX.Element} JSX-разметка личного кабинета
  */
@@ -32,20 +32,11 @@ export default function Profile() {
             .catch(() => navigate('/login'));
     }, [navigate]);
 
-    /**
-     * Показывает всплывающее уведомление.
-     * @param {string} message текст сообщения
-     * @param {string} type тип ('success' или 'error')
-     */
     const showToast = (message, type) => {
         setNotification({ message, type });
         setTimeout(() => setNotification(null), TOAST_DURATION_MS);
     };
 
-    /**
-     * Обрабатывает выбор файла и валидирует его перед отправкой.
-     * @param {Event} e событие выбора файла
-     */
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
         if (!selectedFile) {
@@ -70,10 +61,6 @@ export default function Profile() {
         setFile(selectedFile);
     };
 
-    /**
-     * Отправляет выбранный файл на сервер.
-     * @param {Event} e событие отправки формы
-     */
     const handleUpload = (e) => {
         e.preventDefault();
         
@@ -100,11 +87,8 @@ export default function Profile() {
         });
     };
 
-    /**
-     * Выполняет выход из системы и перенаправляет на главную.
-     */
     const handleLogout = () => {
-        api.delete('/auth').then(() => navigate('/'));
+        api.delete('/auth').then(() => navigate('/login'));
     };
 
     if (!user) return <div style={{ padding: '30px' }}>Загрузка профиля...</div>;
@@ -143,12 +127,30 @@ export default function Profile() {
                 <button type="submit" style={{ width: 'auto', marginTop: 0 }}>Загрузить</button>
             </form>
 
-            <button 
-                onClick={handleLogout} 
-                style={{ background: '#dc3545', color: 'white', padding: '8px 15px', border: 'none', borderRadius: '4px', cursor: 'pointer', width: 'auto', marginTop: 0 }}
-            >
-                Выйти из системы
-            </button>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <button 
+                    onClick={() => navigate('/news')} 
+                    style={{ background: '#17a2b8', color: 'white', padding: '8px 15px', border: 'none', borderRadius: '4px', cursor: 'pointer', width: 'auto', marginTop: 0 }}
+                >
+                    К новостям
+                </button>
+
+                {user.role === 'ADMIN' && (
+                    <button 
+                        onClick={() => navigate('/admin')} 
+                        style={{ background: '#007bff', color: 'white', padding: '8px 15px', border: 'none', borderRadius: '4px', cursor: 'pointer', width: 'auto', marginTop: 0 }}
+                    >
+                        В админ-панель
+                    </button>
+                )}
+                
+                <button 
+                    onClick={handleLogout} 
+                    style={{ background: '#dc3545', color: 'white', padding: '8px 15px', border: 'none', borderRadius: '4px', cursor: 'pointer', width: 'auto', marginTop: 0 }}
+                >
+                    Выйти из системы
+                </button>
+            </div>
         </div>
     );
 }

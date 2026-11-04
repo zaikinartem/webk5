@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-const backend = 'http://localhost:8080/webk5-1.0-SNAPSHOT'
+const backend = 'http://localhost:8080/webk5'
 
 export default defineConfig({
   plugins: [react()],
