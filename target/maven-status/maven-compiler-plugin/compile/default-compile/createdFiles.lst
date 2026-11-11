@@ -5,6 +5,7 @@ com\datingsite\service\AuthService.class
 com\datingsite\util\DatabaseConnection.class
 com\datingsite\controller\AdminController.class
 com\datingsite\model\Role.class
+com\datingsite\controller\UserController.class
 com\datingsite\WebConfig.class
 com\datingsite\controller\AuthController.class
 com\datingsite\controller\NewsController.class
@@ -13,4 +14,5 @@ com\datingsite\model\News.class
 com\datingsite\service\NewsService.class
 com\datingsite\model\User.class
 com\datingsite\controller\InfoController.class
+com\datingsite\repository\LikeRepository.class
 com\datingsite\repository\UserRepository.class

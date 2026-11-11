@@ -15,11 +15,14 @@ import java.util.Map;
 
 /**
  * Контроллер для работы с новостной лентой.
- * Предоставляет публичный доступ к чтению и защищенный доступ к редактированию.
+ * Чтение доступно всем, редактирование — только модераторам и админам.
  */
 @RestController
 @RequestMapping("/api/news")
 public class NewsController {
+
+    /** Имя атрибута сессии для текущего пользователя. */
+    private static final String SESSION_USER_KEY = "currentUser";
 
     /** Сервис для работы с новостями. */
     private final NewsService newsService;
@@ -40,9 +43,12 @@ public class NewsController {
      * @return true, если пользователь является администратором или модератором
      */
     private boolean canManageNews(HttpSession session) {
-        User user = (User) session.getAttribute("currentUser");
-        if (user == null) return false;
-        return user.getRole() == Role.ADMIN || user.getRole() == Role.MODERATOR;
+        User user = (User) session.getAttribute(SESSION_USER_KEY);
+        if (user == null) {
+            return false;
+        }
+        return user.getRole() == Role.ADMIN 
+                || user.getRole() == Role.MODERATOR;
     }
 
     /**
@@ -56,12 +62,15 @@ public class NewsController {
             List<News> newsList = newsService.getAllNews();
             return ResponseEntity.ok(newsList);
         } catch (SQLException e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Ошибка БД при получении новостей."));
+            return ResponseEntity.internalServerError()
+                    .body(Map.of(
+                            "error", "Ошибка БД при получении новостей."
+                    ));
         }
     }
 
     /**
-     * Создает новую новость (только для модераторов и админов).
+     * Создает новую новость.
      *
      * @param title   заголовок
      * @param content текст новости
@@ -70,28 +79,39 @@ public class NewsController {
      */
     @PostMapping
     public ResponseEntity<?> createNews(
-            @RequestParam String title, 
-            @RequestParam String content, 
+            @RequestParam String title,
+            @RequestParam String content,
             HttpSession session) {
-        
+
         if (!canManageNews(session)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Доступ запрещен. Требуются права модератора."));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of(
+                            "error", 
+                            "Доступ запрещен. Требуются права модератора."
+                    ));
         }
 
-        User user = (User) session.getAttribute("currentUser");
+        User user = (User) session.getAttribute(SESSION_USER_KEY);
 
         try {
             newsService.createNews(title, content, user.getUsername());
-            return ResponseEntity.ok(Map.of("success", true, "message", "Новость успешно добавлена."));
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Новость успешно добавлена."
+            ));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
         } catch (SQLException e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Ошибка БД при создании новости."));
+            return ResponseEntity.internalServerError()
+                    .body(Map.of(
+                            "error", "Ошибка БД при создании новости."
+                    ));
         }
     }
 
     /**
-     * Редактирует существующую новость (только для модераторов и админов).
+     * Редактирует существующую новость.
      *
      * @param id      идентификатор новости
      * @param title   новый заголовок
@@ -102,21 +122,59 @@ public class NewsController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateNews(
             @PathVariable int id,
-            @RequestParam String title, 
-            @RequestParam String content, 
+            @RequestParam String title,
+            @RequestParam String content,
             HttpSession session) {
-        
+
         if (!canManageNews(session)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Доступ запрещен."));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Доступ запрещен."));
         }
 
         try {
             newsService.updateNews(id, title, content);
-            return ResponseEntity.ok(Map.of("success", true, "message", "Новость обновлена."));
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Новость обновлена."
+            ));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
         } catch (SQLException e) {
-            return ResponseEntity.internalServerError().body(Map.of("error", "Ошибка БД при обновлении новости."));
+            return ResponseEntity.internalServerError()
+                    .body(Map.of(
+                            "error", "Ошибка БД при обновлении новости."
+                    ));
+        }
+    }
+
+    /**
+     * Удаляет новость.
+     *
+     * @param id      идентификатор новости
+     * @param session текущая HTTP-сессия
+     * @return ответ об успехе или ошибке
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteNews(
+            @PathVariable int id,
+            HttpSession session) {
+
+        if (!canManageNews(session)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Доступ запрещен."));
+        }
+        try {
+            newsService.deleteNews(id);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Новость удалена."
+            ));
+        } catch (SQLException e) {
+            return ResponseEntity.internalServerError()
+                    .body(Map.of(
+                            "error", "Ошибка БД при удалении новости."
+                    ));
         }
     }
 }

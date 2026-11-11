@@ -17,20 +17,29 @@ import java.util.List;
 @Repository
 public class NewsRepository {
 
-    /** SQL-запрос для получения всех новостей (сортировка по дате - сначала новые). */
-    private static final String SQL_FIND_ALL = "SELECT * FROM news ORDER BY created_at DESC";
-    
+    /** SQL-запрос для получения всех новостей. */
+    private static final String SQL_FIND_ALL = 
+            "SELECT * FROM news ORDER BY created_at DESC";
+
     /** SQL-запрос для добавления новой новости. */
-    private static final String SQL_INSERT = "INSERT INTO news (title, content, author) VALUES (?, ?, ?)";
-    
+    private static final String SQL_INSERT = 
+            "INSERT INTO news (title, content, author) VALUES (?, ?, ?)";
+
     /** SQL-запрос для обновления существующей новости. */
-    private static final String SQL_UPDATE = "UPDATE news SET title = ?, content = ? WHERE id = ?";
-    
-    /** SQL-запрос для проверки существования новости с таким же заголовком. */
-    private static final String SQL_CHECK_TITLE = "SELECT COUNT(*) FROM news WHERE title = ?";
-    
-    /** SQL-запрос для проверки существования новости с таким же текстом. */
-    private static final String SQL_CHECK_CONTENT = "SELECT COUNT(*) FROM news WHERE content = ?";
+    private static final String SQL_UPDATE = 
+            "UPDATE news SET title = ?, content = ? WHERE id = ?";
+
+    /** SQL-запрос для проверки существования новости с таким заголовком. */
+    private static final String SQL_CHECK_TITLE = 
+            "SELECT COUNT(*) FROM news WHERE title = ?";
+
+    /** SQL-запрос для проверки существования новости с таким текстом. */
+    private static final String SQL_CHECK_CONTENT = 
+            "SELECT COUNT(*) FROM news WHERE content = ?";
+
+    /** SQL-запрос для удаления новости. */
+    private static final String SQL_DELETE = 
+            "DELETE FROM news WHERE id = ?";
 
     /**
      * Получает список всех новостей.
@@ -41,9 +50,10 @@ public class NewsRepository {
     public List<News> findAll() throws SQLException {
         List<News> newsList = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(SQL_FIND_ALL);
+             PreparedStatement pstmt = 
+                     conn.prepareStatement(SQL_FIND_ALL);
              ResultSet rs = pstmt.executeQuery()) {
-            
+
             while (rs.next()) {
                 News news = new News();
                 news.setId(rs.getInt("id"));
@@ -65,10 +75,12 @@ public class NewsRepository {
      * @param author  логин автора
      * @throws SQLException при ошибках работы с базой данных
      */
-    public void save(String title, String content, String author) throws SQLException {
+    public void save(String title, String content, String author) 
+            throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(SQL_INSERT)) {
-            
+             PreparedStatement pstmt = 
+                     conn.prepareStatement(SQL_INSERT)) {
+
             pstmt.setString(1, title);
             pstmt.setString(2, content);
             pstmt.setString(3, author);
@@ -84,10 +96,12 @@ public class NewsRepository {
      * @param content новый текст
      * @throws SQLException при ошибках работы с базой данных
      */
-    public void update(int id, String title, String content) throws SQLException {
+    public void update(int id, String title, String content) 
+            throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(SQL_UPDATE)) {
-            
+             PreparedStatement pstmt = 
+                     conn.prepareStatement(SQL_UPDATE)) {
+
             pstmt.setString(1, title);
             pstmt.setString(2, content);
             pstmt.setInt(3, id);
@@ -104,7 +118,9 @@ public class NewsRepository {
      */
     public boolean existsByTitle(String title) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(SQL_CHECK_TITLE)) {
+             PreparedStatement pstmt = 
+                     conn.prepareStatement(SQL_CHECK_TITLE)) {
+
             pstmt.setString(1, title);
             ResultSet rs = pstmt.executeQuery();
             return rs.next() && rs.getInt(1) > 0;
@@ -120,10 +136,28 @@ public class NewsRepository {
      */
     public boolean existsByContent(String content) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(SQL_CHECK_CONTENT)) {
+             PreparedStatement pstmt = 
+                     conn.prepareStatement(SQL_CHECK_CONTENT)) {
+
             pstmt.setString(1, content);
             ResultSet rs = pstmt.executeQuery();
             return rs.next() && rs.getInt(1) > 0;
+        }
+    }
+
+    /**
+     * Удаляет новость по её идентификатору.
+     *
+     * @param id идентификатор новости
+     * @throws SQLException при ошибках работы с базой данных
+     */
+    public void deleteById(int id) throws SQLException {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = 
+                     conn.prepareStatement(SQL_DELETE)) {
+
+            pstmt.setInt(1, id);
+            pstmt.executeUpdate();
         }
     }
 }

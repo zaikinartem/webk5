@@ -29,10 +29,16 @@ public class News implements Serializable {
      * Конструктор по умолчанию.
      */
     public News() {
+        this.id = null;
+        this.author = "";
+        this.content = "";
+        this.createdAt = null;
+        this.title = "";
     }
 
     /**
      * Возвращает идентификатор новости.
+     *
      * @return id
      */
     public Integer getId() {
@@ -41,6 +47,7 @@ public class News implements Serializable {
 
     /**
      * Устанавливает идентификатор новости.
+     *
      * @param id уникальный идентификатор
      */
     public void setId(Integer id) {
@@ -49,6 +56,7 @@ public class News implements Serializable {
 
     /**
      * Возвращает заголовок новости.
+     *
      * @return title
      */
     public String getTitle() {
@@ -57,6 +65,7 @@ public class News implements Serializable {
 
     /**
      * Устанавливает заголовок новости.
+     *
      * @param title заголовок
      */
     public void setTitle(String title) {
@@ -65,6 +74,7 @@ public class News implements Serializable {
 
     /**
      * Возвращает текст новости.
+     *
      * @return content
      */
     public String getContent() {
@@ -73,6 +83,7 @@ public class News implements Serializable {
 
     /**
      * Устанавливает текст новости.
+     *
      * @param content текст
      */
     public void setContent(String content) {
@@ -81,6 +92,7 @@ public class News implements Serializable {
 
     /**
      * Возвращает логин автора.
+     *
      * @return author
      */
     public String getAuthor() {
@@ -89,6 +101,7 @@ public class News implements Serializable {
 
     /**
      * Устанавливает логин автора.
+     *
      * @param author логин
      */
     public void setAuthor(String author) {
@@ -97,6 +110,7 @@ public class News implements Serializable {
 
     /**
      * Возвращает дату публикации.
+     *
      * @return createdAt
      */
     public Timestamp getCreatedAt() {
@@ -105,6 +119,7 @@ public class News implements Serializable {
 
     /**
      * Устанавливает дату публикации.
+     *
      * @param createdAt дата и время
      */
     public void setCreatedAt(Timestamp createdAt) {

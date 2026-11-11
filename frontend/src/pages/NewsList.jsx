@@ -4,7 +4,7 @@ import api from '../services/api';
 
 /**
  * Компонент новостной ленты.
- * Отображает список новостей, данные о статусе сервера и элементы навигации.
+ * Отображает список новостей, статус сервера и элементы навигации.
  *
  * @returns {JSX.Element} JSX-разметка новостной ленты
  */
@@ -12,28 +12,34 @@ export default function NewsList() {
     const [news, setNews] = useState([]);
     const [user, setUser] = useState(null);
     const [info, setInfo] = useState({ dateTime: '', visitCount: 0 });
+    const [deleteTarget, setDeleteTarget] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
-        api.get('/news')
-            .then(response => setNews(response.data))
-            .catch(error => console.error('Ошибка загрузки новостей:', error));
-
+        loadNews();
         api.get('/auth')
-            .then(response => {
-                if (response.data.authenticated) {
-                    setUser(response.data);
-                }
+            .then(res => {
+                if (res.data.authenticated) setUser(res.data);
             })
             .catch(() => {});
-
         api.get('/info')
-            .then(response => setInfo(response.data))
-            .catch(error => console.error('Ошибка загрузки счетчика:', error));
+            .then(res => setInfo(res.data))
+            .catch(() => {});
     }, []);
 
     /**
-     * Выполняет выход из системы и перенаправляет на страницу входа.
+     * Загружает список новостей с сервера.
+     */
+    const loadNews = () => {
+        api.get('/news')
+            .then(response => setNews(response.data))
+            .catch(error => 
+                console.error('Ошибка загрузки новостей:', error)
+            );
+    };
+
+    /**
+     * Выполняет выход пользователя из системы.
      */
     const handleLogout = () => {
         api.delete('/auth').then(() => {
@@ -42,73 +48,445 @@ export default function NewsList() {
         });
     };
 
-    const canManage = user && (user.role === 'ADMIN' || user.role === 'MODERATOR');
+    /**
+     * Подтверждает и выполняет удаление выбранной новости.
+     */
+    const confirmDelete = () => {
+        if (!deleteTarget) return;
+        
+        api.delete(`/news/${deleteTarget.id}`)
+            .then(() => {
+                setNews(news.filter(n => n.id !== deleteTarget.id));
+                setDeleteTarget(null);
+            })
+            .catch((error) => {
+                alert(
+                    error.response?.data?.error 
+                    || 'Ошибка удаления новости'
+                );
+                setDeleteTarget(null);
+            });
+    };
+
+    const canManage = user && 
+        (user.role === 'ADMIN' || user.role === 'MODERATOR');
 
     return (
-        <div className="container" style={{ maxWidth: '800px', margin: '0 auto', padding: '30px' }}>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', background: '#f8f9fa', padding: '15px', borderRadius: '8px', flexWrap: 'wrap', gap: '10px' }}>
-                <h2 style={{ margin: 0 }}>📰 Новости LoveConnect</h2>
-                
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                    {user ? (
-                        <>
-                            {canManage && (
-                                <button 
-                                    onClick={() => navigate('/news/manage')} 
-                                    style={{ background: '#28a745', color: 'white', padding: '8px 15px', border: 'none', borderRadius: '4px', cursor: 'pointer', width: 'auto', marginTop: 0 }}
-                                >
-                                    ⚙️ Управление
-                                </button>
-                            )}
+        <div style={{
+            background: '#F9FAFB', 
+            backgroundImage: 
+                'radial-gradient(#F1F5F9 1px, transparent 1px)', 
+            backgroundSize: '20px 20px', 
+            minHeight: '100vh', 
+            fontFamily: "'Inter', sans-serif", 
+            color: '#1E293B'
+        }}>
+            {deleteTarget && (
+                <div style={{
+                    position: 'fixed', 
+                    top: 0, 
+                    left: 0, 
+                    width: '100vw', 
+                    height: '100vh',
+                    background: 'rgba(15, 23, 42, 0.6)', 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    zIndex: 2000
+                }}>
+                    <div style={{
+                        background: '#fff', 
+                        padding: '32px', 
+                        borderRadius: '16px',
+                        maxWidth: '400px', 
+                        width: '90%', 
+                        textAlign: 'center', 
+                        boxShadow: 
+                            '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+                    }}>
+                        <h3 style={{
+                            marginTop: 0, 
+                            color: '#DC2626', 
+                            fontSize: '20px'
+                        }}>
+                            Удаление новости
+                        </h3>
+                        <p style={{
+                            color: '#64748B', 
+                            marginBottom: '24px'
+                        }}>
+                            Вы уверены, что хотите удалить новость 
+                            «{deleteTarget.title}»?
+                        </p>
+                        <div style={{
+                            display: 'flex', 
+                            gap: '12px', 
+                            justifyContent: 'center'
+                        }}>
                             <button 
-                                onClick={() => navigate('/profile')} 
-                                style={{ background: '#007bff', color: 'white', padding: '8px 15px', border: 'none', borderRadius: '4px', cursor: 'pointer', width: 'auto', marginTop: 0 }}
+                                onClick={() => setDeleteTarget(null)} 
+                                style={{
+                                    background: '#F1F5F9', 
+                                    color: '#475569', 
+                                    padding: '10px 20px', 
+                                    border: 'none', 
+                                    borderRadius: '8px', 
+                                    cursor: 'pointer', 
+                                    fontWeight: '600', 
+                                    width: 'auto', 
+                                    marginTop: 0
+                                }}
                             >
-                                👤 Профиль
+                                Отмена
                             </button>
                             <button 
-                                onClick={handleLogout} 
-                                style={{ background: '#dc3545', color: 'white', padding: '8px 15px', border: 'none', borderRadius: '4px', cursor: 'pointer', width: 'auto', marginTop: 0 }}
+                                onClick={confirmDelete} 
+                                style={{
+                                    background: '#DC2626', 
+                                    color: 'white', 
+                                    padding: '10px 20px', 
+                                    border: 'none', 
+                                    borderRadius: '8px', 
+                                    cursor: 'pointer', 
+                                    fontWeight: '600', 
+                                    width: 'auto', 
+                                    marginTop: 0
+                                }}
                             >
-                                🚪 Выйти
+                                Да, удалить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <header style={{
+                background: 'rgba(255, 255, 255, 0.9)', 
+                backdropFilter: 'blur(10px)', 
+                padding: '20px 40px', 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                borderBottom: '1px solid #E2E8F0', 
+                position: 'sticky', 
+                top: 0, 
+                zIndex: 100
+            }}>
+                <h2 style={{
+                    margin: 0, 
+                    color: '#FF4B5C', 
+                    fontSize: '24px', 
+                    fontWeight: '800', 
+                    letterSpacing: '-0.5px'
+                }}>
+                    LoveConnect
+                </h2>
+                <nav style={{
+                    display: 'flex', 
+                    gap: '24px', 
+                    alignItems: 'center'
+                }}>
+                    <Link 
+                        to="/" 
+                        style={{
+                            textDecoration: 'none', 
+                            color: '#64748B', 
+                            fontWeight: '500'
+                        }}
+                    >
+                        Главная
+                    </Link>
+                    <Link 
+                        to="/news" 
+                        style={{
+                            textDecoration: 'none', 
+                            color: '#FF4B5C', 
+                            fontWeight: '600', 
+                            borderBottom: '2px solid #FF4B5C', 
+                            paddingBottom: '4px'
+                        }}
+                    >
+                        Новости
+                    </Link>
+                    {user ? (
+                        <>
+                            <Link 
+                                to="/profile" 
+                                style={{
+                                    textDecoration: 'none', 
+                                    color: '#64748B', 
+                                    fontWeight: '500'
+                                }}
+                            >
+                                Профиль
+                            </Link>
+                            {canManage && (
+                                <Link 
+                                    to="/news/manage" 
+                                    style={{
+                                        textDecoration: 'none', 
+                                        color: '#10B981', 
+                                        fontWeight: '600'
+                                    }}
+                                >
+                                    Управление
+                                </Link>
+                            )}
+                            <button 
+                                onClick={handleLogout} 
+                                style={{
+                                    background: '#F1F5F9', 
+                                    color: '#475569', 
+                                    padding: '8px 16px', 
+                                    border: 'none', 
+                                    borderRadius: '8px', 
+                                    cursor: 'pointer', 
+                                    fontWeight: '600', 
+                                    width: 'auto', 
+                                    marginTop: 0
+                                }}
+                            >
+                                Выйти
                             </button>
                         </>
                     ) : (
                         <>
-                            <Link to="/login"><button style={{ background: '#ff4b5c', color: 'white', padding: '8px 15px', border: 'none', borderRadius: '4px', cursor: 'pointer', width: 'auto', marginTop: 0 }}>Войти</button></Link>
-                            <Link to="/register"><button style={{ background: '#6c757d', color: 'white', padding: '8px 15px', border: 'none', borderRadius: '4px', cursor: 'pointer', width: 'auto', marginTop: 0 }}>Регистрация</button></Link>
+                            <Link 
+                                to="/login" 
+                                style={{
+                                    textDecoration: 'none', 
+                                    color: '#64748B', 
+                                    fontWeight: '500'
+                                }}
+                            >
+                                Войти
+                            </Link>
+                            <Link 
+                                to="/register" 
+                                style={{
+                                    textDecoration: 'none', 
+                                    color: '#64748B', 
+                                    fontWeight: '500'
+                                }}
+                            >
+                                Регистрация
+                            </Link>
                         </>
                     )}
-                </div>
-            </div>
+                </nav>
+            </header>
 
-            <div style={{ 
-                background: '#fff5f6', border: '1px solid #ffd1d5', padding: '15px', 
-                borderRadius: '8px', marginBottom: '20px', display: 'flex', justifyContent: 'space-around'
+            <div style={{
+                maxWidth: '800px', 
+                margin: '0 auto', 
+                padding: '60px 20px'
             }}>
-                <span>📅 <strong>Время:</strong> {info.dateTime || 'Загрузка...'}</span>
-                <span>👁 <strong>Посещений:</strong> {info.visitCount}</span>
-            </div>
-
-            <p style={{ textAlign: 'center', color: '#666' }}>Последние события нашего портала</p>
-
-            {news.length === 0 ? (
-                <p style={{ textAlign: 'center', color: '#666' }}>Пока новостей нет...</p>
-            ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '20px' }}>
-                    {news.map(item => (
-                        <div key={item.id} style={{ background: '#fff', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
-                            <h3 style={{ margin: '0 0 10px 0', color: '#ff4b5c' }}>{item.title}</h3>
-                            <p style={{ margin: '0 0 15px 0', whiteSpace: 'pre-wrap', color: '#444' }}>{item.content}</p>
-                            <div style={{ fontSize: '12px', color: '#999', display: 'flex', justifyContent: 'space-between' }}>
-                                <span>✍️ Автор: {item.author}</span>
-                                <span>📅 {new Date(item.createdAt).toLocaleString('ru-RU')}</span>
-                            </div>
-                        </div>
-                    ))}
+                <div style={{
+                    background: '#fff', 
+                    border: '1px solid #E2E8F0', 
+                    padding: '20px 30px',
+                    borderRadius: '16px', 
+                    marginBottom: '40px', 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+                }}>
+                    <div style={{
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '8px', 
+                        color: '#64748B', 
+                        fontSize: '14px'
+                    }}>
+                        <svg 
+                            width="18" 
+                            height="18" 
+                            viewBox="0 0 24 24" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            strokeWidth="2" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round"
+                        >
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span>
+                            <strong>Время сервера:</strong> 
+                            {' '}{info.dateTime || 'Загрузка...'}
+                        </span>
+                    </div>
+                    <div style={{
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '8px', 
+                        color: '#64748B', 
+                        fontSize: '14px'
+                    }}>
+                        <svg 
+                            width="18" 
+                            height="18" 
+                            viewBox="0 0 24 24" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            strokeWidth="2" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round"
+                        >
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        <span>
+                            <strong>Всего посещений:</strong> 
+                            {' '}{info.visitCount}
+                        </span>
+                    </div>
                 </div>
-            )}
+
+                <h1 style={{
+                    color: '#1E293B', 
+                    textAlign: 'center', 
+                    marginBottom: '40px', 
+                    fontSize: '32px', 
+                    fontWeight: '800', 
+                    letterSpacing: '-0.5px'
+                }}>
+                    Новостная лента
+                </h1>
+
+                {news.length === 0 ? (
+                    <p style={{
+                        textAlign: 'center', 
+                        color: '#64748B'
+                    }}>
+                        Пока новостей нет...
+                    </p>
+                ) : (
+                    <div style={{
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        gap: '24px'
+                    }}>
+                        {news.map(item => (
+                            <div 
+                                key={item.id} 
+                                style={{
+                                    background: '#fff', 
+                                    padding: '32px', 
+                                    borderRadius: '16px', 
+                                    boxShadow: 
+                                        '0 10px 20px -5px rgba(0, 0, 0, 0.05)', 
+                                    border: '1px solid #F1F5F9', 
+                                    position: 'relative', 
+                                    transition: 
+                                        'transform 0.2s, box-shadow 0.2s'
+                                }} 
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.transform = 
+                                        'translateY(-4px)';
+                                    e.currentTarget.style.boxShadow = 
+                                        '0 15px 25px -5px ' +
+                                        'rgba(0, 0, 0, 0.08)';
+                                }} 
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform = 
+                                        'translateY(0)';
+                                    e.currentTarget.style.boxShadow = 
+                                        '0 10px 20px -5px ' +
+                                        'rgba(0, 0, 0, 0.05)';
+                                }}
+                            >
+                                <h3 style={{
+                                    margin: '0 0 16px 0', 
+                                    color: '#1E293B', 
+                                    fontSize: '22px', 
+                                    fontWeight: '700', 
+                                    letterSpacing: '-0.5px'
+                                }}>
+                                    {item.title}
+                                </h3>
+                                <p style={{
+                                    margin: '0 0 24px 0', 
+                                    whiteSpace: 'pre-wrap', 
+                                    color: '#475569', 
+                                    lineHeight: '1.7', 
+                                    fontSize: '16px'
+                                }}>
+                                    {item.content}
+                                </p>
+
+                                <div style={{
+                                    fontSize: '14px', 
+                                    color: '#94A3B8', 
+                                    display: 'flex', 
+                                    justifyContent: 'space-between', 
+                                    borderTop: '1px solid #F1F5F9', 
+                                    paddingTop: '20px'
+                                }}>
+                                    <span>
+                                        Автор: 
+                                        <strong style={{ color: '#64748B' }}>
+                                            {' '}{item.author}
+                                        </strong>
+                                    </span>
+                                    <span>
+                                        {new Date(item.createdAt)
+                                            .toLocaleString('ru-RU')}
+                                    </span>
+                                </div>
+
+                                {canManage && (
+                                    <button 
+                                        onClick={() => 
+                                            setDeleteTarget(item)
+                                        }
+                                        style={{
+                                            position: 'absolute', 
+                                            top: '24px', 
+                                            right: '24px', 
+                                            background: '#FEF2F2', 
+                                            color: '#DC2626', 
+                                            border: 'none', 
+                                            borderRadius: '8px', 
+                                            padding: '8px', 
+                                            cursor: 'pointer', 
+                                            width: 'auto', 
+                                            marginTop: 0, 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            justifyContent: 'center', 
+                                            transition: 'background 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => 
+                                            e.currentTarget.style.background = 
+                                                '#FEE2E2'
+                                        }
+                                        onMouseLeave={(e) => 
+                                            e.currentTarget.style.background = 
+                                                '#FEF2F2'
+                                        }
+                                        title="Удалить новость"
+                                    >
+                                        <svg 
+                                            width="18" 
+                                            height="18" 
+                                            viewBox="0 0 24 24" 
+                                            fill="none" 
+                                            stroke="currentColor" 
+                                            strokeWidth="2" 
+                                            strokeLinecap="round" 
+                                            strokeLinejoin="round"
+                                        >
+                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                        </svg>
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

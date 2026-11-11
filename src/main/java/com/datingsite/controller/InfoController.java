@@ -11,7 +11,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Контроллер для получения информации о статусе сервера и количестве посещений.
+ * Контроллер для получения информации о статусе сервера.
+ * Отдает текущее время и количество посещений.
  */
 @RestController
 @RequestMapping("/api/info")
@@ -19,13 +20,16 @@ public class InfoController {
 
     /** Атомарный счетчик посещений. */
     private static final AtomicInteger counter = new AtomicInteger(0);
-    
+
     /** Ключ сессии для отслеживания уникального визита. */
     private static final String VISITED_KEY = "visited";
 
+    /** Формат отображения даты и времени. */
+    private static final String DATE_FORMAT = "dd.MM.yyyy HH:mm:ss";
+
     /**
-     * Обрабатывает GET-запрос для получения текущего времени и счетчика посещений.
-     * Увеличивает счетчик только при первом визите пользователя в рамках текущей сессии.
+     * Обрабатывает GET-запрос для получения текущего времени и счетчика.
+     * Увеличивает счетчик только при первом визите в рамках сессии.
      *
      * @param session текущая HTTP-сессия
      * @return карта с текущим временем и количеством посещений
@@ -36,7 +40,13 @@ public class InfoController {
             counter.incrementAndGet();
             session.setAttribute(VISITED_KEY, true);
         }
-        String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss"));
-        return Map.of("dateTime", currentTime, "visitCount", counter.get());
+        
+        String currentTime = LocalDateTime.now()
+                .format(DateTimeFormatter.ofPattern(DATE_FORMAT));
+                
+        return Map.of(
+                "dateTime", currentTime,
+                "visitCount", counter.get()
+        );
     }
 }

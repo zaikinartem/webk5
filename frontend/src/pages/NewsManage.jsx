@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
+/** Время отображения уведомления в миллисекундах. */
+const TOAST_DURATION_MS = 3000;
+
 /**
  * Компонент панели управления новостями для модераторов и администраторов.
  * Позволяет создавать, редактировать и удалять новости.
@@ -22,20 +25,26 @@ export default function NewsManage() {
     }, []);
 
     /**
-     * Загружает список новостей с сервера.
+     * Загружает список всех новостей с сервера.
      */
     const loadNews = () => {
         api.get('/news')
             .then(response => setNews(response.data))
-            .catch(() => showToast('Ошибка загрузки новостей', 'error'));
+            .catch(() => 
+                showToast('Ошибка загрузки новостей', 'error')
+            );
     };
 
     /**
-     * Проверяет, имеет ли текущий пользователь доступ к панели.
+     * Проверяет права доступа текущего пользователя к панели.
+     * Перенаправляет на ленту, если прав недостаточно.
      */
     const checkAccess = () => {
         api.get('/auth').then(res => {
-            if (!res.data.authenticated || (res.data.role !== 'ADMIN' && res.data.role !== 'MODERATOR')) {
+            const isAdmin = res.data.role === 'ADMIN';
+            const isModerator = res.data.role === 'MODERATOR';
+            
+            if (!res.data.authenticated || (!isAdmin && !isModerator)) {
                 navigate('/news');
             }
         });
@@ -43,23 +52,28 @@ export default function NewsManage() {
 
     /**
      * Показывает всплывающее уведомление.
+     *
      * @param {string} message текст сообщения
-     * @param {string} type тип ('success' или 'error')
+     * @param {string} type тип уведомления ('success' или 'error')
      */
     const showToast = (message, type) => {
         setNotification({ message, type });
-        setTimeout(() => setNotification(null), 3000);
+        setTimeout(() => setNotification(null), TOAST_DURATION_MS);
     };
 
     /**
-     * Обрабатывает сохранение новости (создание или обновление).
+     * Обрабатывает отправку формы (создание или обновление новости).
+     *
      * @param {Event} e событие отправки формы
      */
     const handleSubmit = (e) => {
         e.preventDefault();
-        
+
         if (!title.trim() || !content.trim()) {
-            showToast('Заполните заголовок и текст новости.', 'error');
+            showToast(
+                'Заполните заголовок и текст новости.', 
+                'error'
+            );
             return;
         }
 
@@ -74,7 +88,13 @@ export default function NewsManage() {
                     resetForm();
                     loadNews();
                 })
-                .catch(() => showToast('Ошибка обновления', 'error'));
+                .catch((error) => {
+                    showToast(
+                        error.response?.data?.error 
+                        || 'Ошибка обновления', 
+                        'error'
+                    );
+                });
         } else {
             api.post('/news', params)
                 .then(() => {
@@ -82,12 +102,19 @@ export default function NewsManage() {
                     resetForm();
                     loadNews();
                 })
-                .catch(() => showToast('Ошибка добавления', 'error'));
+                .catch((error) => {
+                    showToast(
+                        error.response?.data?.error 
+                        || 'Ошибка добавления', 
+                        'error'
+                    );
+                });
         }
     };
 
     /**
      * Заполняет форму данными выбранной новости для редактирования.
+     *
      * @param {Object} item объект новости
      */
     const handleEdit = (item) => {
@@ -107,74 +134,243 @@ export default function NewsManage() {
     };
 
     return (
-        <div style={{ padding: '30px', maxWidth: '800px', margin: '0 auto', position: 'relative' }}>
-            
+        <div style={{
+            background: '#F9FAFB', 
+            minHeight: '100vh', 
+            fontFamily: "'Inter', sans-serif", 
+            color: '#1E293B'
+        }}>
             {notification && (
                 <div style={{
-                    position: 'fixed', top: '20px', right: '20px',
-                    background: notification.type === 'success' ? '#d4edda' : '#f8d7da',
-                    color: notification.type === 'success' ? '#155724' : '#721c24',
-                    padding: '15px 25px', borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    zIndex: 1000, fontWeight: 'bold',
-                    border: `1px solid ${notification.type === 'success' ? '#c3e6cb' : '#f5c6cb'}`
+                    position: 'fixed', 
+                    top: '24px', 
+                    right: '24px',
+                    background: notification.type === 'success' 
+                        ? '#ECFDF5' 
+                        : '#FEF2F2',
+                    color: notification.type === 'success' 
+                        ? '#065F46' 
+                        : '#991B1B',
+                    padding: '16px 24px', 
+                    borderRadius: '12px', 
+                    zIndex: 1000, 
+                    fontWeight: '600',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                    border: `1px solid ${
+                        notification.type === 'success' 
+                            ? '#A7F3D0' 
+                            : '#FECACA'
+                    }`
                 }}>
                     {notification.message}
                 </div>
             )}
 
-            <h2>⚙️ Управление новостями</h2>
-            <button 
-                onClick={() => navigate('/news')} 
-                style={{ background: '#6c757d', color: 'white', padding: '8px 15px', border: 'none', borderRadius: '4px', cursor: 'pointer', width: 'auto', marginBottom: '20px' }}
-            >
-                ← К ленте новостей
-            </button>
+            <header style={{
+                background: '#fff', 
+                padding: '20px 40px', 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+            }}>
+                <h2 style={{
+                    margin: 0, 
+                    color: '#FF4B5C', 
+                    fontSize: '24px', 
+                    fontWeight: '700'
+                }}>
+                    LoveConnect
+                </h2>
+                <button 
+                    onClick={() => navigate('/news')} 
+                    style={{
+                        background: '#F1F5F9', 
+                        color: '#475569', 
+                        padding: '8px 16px', 
+                        border: 'none', 
+                        borderRadius: '8px', 
+                        cursor: 'pointer', 
+                        fontWeight: '600', 
+                        width: 'auto', 
+                        marginTop: 0
+                    }}
+                >
+                    Назад к ленте
+                </button>
+            </header>
 
-            <form onSubmit={handleSubmit} style={{ background: '#f8f9fa', padding: '20px', borderRadius: '8px', border: '1px solid #dee2e6', marginBottom: '30px' }}>
-                <h3 style={{ marginTop: 0 }}>{editingId ? 'Редактировать новость' : 'Добавить новость'}</h3>
-                <input 
-                    type="text" 
-                    placeholder="Заголовок" 
-                    value={title} 
-                    onChange={(e) => setTitle(e.target.value)} 
-                    style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' }}
-                />
-                <textarea 
-                    placeholder="Текст новости" 
-                    value={content} 
-                    onChange={(e) => setContent(e.target.value)} 
-                    rows="5"
-                    style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box', resize: 'vertical' }}
-                />
-                <div style={{ display: 'flex', gap: '10px' }}>
-                    <button type="submit" style={{ background: '#28a745', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '4px', cursor: 'pointer', width: 'auto', marginTop: 0 }}>
-                        {editingId ? 'Сохранить изменения' : 'Опубликовать'}
-                    </button>
-                    {editingId && (
-                        <button type="button" onClick={resetForm} style={{ background: '#6c757d', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '4px', cursor: 'pointer', width: 'auto', marginTop: 0 }}>
-                            Отмена
-                        </button>
-                    )}
-                </div>
-            </form>
+            <div style={{
+                maxWidth: '800px', 
+                margin: '0 auto', 
+                padding: '60px 20px'
+            }}>
+                <h1 style={{
+                    fontSize: '32px', 
+                    fontWeight: '800', 
+                    marginBottom: '40px'
+                }}>
+                    Управление новостями
+                </h1>
 
-            <h3>Список новостей</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {news.map(item => (
-                    <div key={item.id} style={{ background: '#fff', padding: '15px', borderRadius: '8px', border: '1px solid #dee2e6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                            <strong>{item.title}</strong>
-                            <div style={{ fontSize: '12px', color: '#666' }}>{item.author} | {new Date(item.createdAt).toLocaleString('ru-RU')}</div>
+                <form 
+                    onSubmit={handleSubmit} 
+                    style={{
+                        background: '#fff', 
+                        padding: '32px', 
+                        borderRadius: '16px', 
+                        border: '1px solid #F1F5F9', 
+                        boxShadow: 
+                            '0 4px 6px -1px rgba(0, 0, 0, 0.05)', 
+                        marginBottom: '40px'
+                    }}
+                >
+                    <h3 style={{
+                        marginTop: 0, 
+                        fontSize: '20px', 
+                        marginBottom: '20px'
+                    }}>
+                        {editingId 
+                            ? 'Редактировать новость' 
+                            : 'Добавить новость'}
+                    </h3>
+
+                    <div style={{
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        gap: '16px'
+                    }}>
+                        <input 
+                            type="text" 
+                            placeholder="Заголовок" 
+                            value={title} 
+                            onChange={(e) => setTitle(e.target.value)} 
+                            style={{
+                                width: '100%', 
+                                padding: '14px', 
+                                background: '#F8FAFC'
+                            }}
+                        />
+                        <textarea 
+                            placeholder="Текст новости" 
+                            value={content} 
+                            onChange={(e) => setContent(e.target.value)} 
+                            rows="6"
+                            style={{
+                                width: '100%', 
+                                padding: '14px', 
+                                background: '#F8FAFC', 
+                                resize: 'vertical'
+                            }}
+                        />
+                        <div style={{
+                            display: 'flex', 
+                            gap: '12px'
+                        }}>
+                            <button 
+                                type="submit" 
+                                style={{
+                                    background: '#FF4B5C', 
+                                    color: 'white', 
+                                    padding: '12px 24px', 
+                                    border: 'none', 
+                                    borderRadius: '8px', 
+                                    cursor: 'pointer', 
+                                    fontWeight: '600', 
+                                    width: 'auto', 
+                                    marginTop: 0
+                                }}
+                            >
+                                {editingId 
+                                    ? 'Сохранить изменения' 
+                                    : 'Опубликовать'}
+                            </button>
+                            {editingId && (
+                                <button 
+                                    type="button" 
+                                    onClick={resetForm} 
+                                    style={{
+                                        background: '#F1F5F9', 
+                                        color: '#475569', 
+                                        padding: '12px 24px', 
+                                        border: 'none', 
+                                        borderRadius: '8px', 
+                                        cursor: 'pointer', 
+                                        fontWeight: '600', 
+                                        width: 'auto', 
+                                        marginTop: 0
+                                    }}
+                                >
+                                    Отмена
+                                </button>
+                            )}
                         </div>
-                        <button 
-                            onClick={() => handleEdit(item)}
-                            style={{ background: '#ffc107', color: '#000', padding: '5px 10px', border: 'none', borderRadius: '4px', cursor: 'pointer', width: 'auto', marginTop: 0 }}
-                        >
-                            ✏️ Редактировать
-                        </button>
                     </div>
-                ))}
+                </form>
+
+                <h3 style={{
+                    fontSize: '20px', 
+                    marginBottom: '20px'
+                }}>
+                    Существующие новости
+                </h3>
+                <div style={{
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    gap: '16px'
+                }}>
+                    {news.map(item => (
+                        <div 
+                            key={item.id} 
+                            style={{
+                                background: '#fff', 
+                                padding: '20px', 
+                                borderRadius: '12px', 
+                                border: '1px solid #F1F5F9', 
+                                display: 'flex', 
+                                justifyContent: 'space-between', 
+                                alignItems: 'center', 
+                                boxShadow: 
+                                    '0 2px 4px rgba(0,0,0,0.02)'
+                            }}
+                        >
+                            <div>
+                                <strong style={{
+                                    fontSize: '16px', 
+                                    display: 'block', 
+                                    marginBottom: '4px'
+                                }}>
+                                    {item.title}
+                                </strong>
+                                <div style={{
+                                    fontSize: '13px', 
+                                    color: '#64748B'
+                                }}>
+                                    {item.author} | 
+                                    {' '}{new Date(item.createdAt)
+                                        .toLocaleString('ru-RU')}
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => handleEdit(item)}
+                                style={{
+                                    background: '#F8FAFC', 
+                                    color: '#1E293B', 
+                                    padding: '8px 16px', 
+                                    border: '1px solid #E2E8F0', 
+                                    borderRadius: '8px', 
+                                    cursor: 'pointer', 
+                                    width: 'auto', 
+                                    marginTop: 0, 
+                                    fontWeight: '500', 
+                                    fontSize: '14px'
+                                }}
+                            >
+                                Редактировать
+                            </button>
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );

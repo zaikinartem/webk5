@@ -1,7 +1,12 @@
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
+import { createRoot } from 'react-dom/client';
+import './index.css';
+import App from './App.jsx';
 
-createRoot(document.getElementById('root')).render(
-  <App />
-)
+/**
+ * Инициализирует React-приложение.
+ * Находит корневой DOM-элемент и рендерит в него компонент {@link App}.
+ */
+const rootElement = document.getElementById('root');
+const root = createRoot(rootElement);
+
+root.render(<App />);

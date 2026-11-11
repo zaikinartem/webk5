@@ -10,11 +10,12 @@ import java.sql.SQLException;
 public class DatabaseConnection {
 
     /** Строка подключения к базе данных с указанием схемы. */
-    private static final String URL = "jdbc:postgresql://localhost:5432/postgres?currentSchema=public";
-    
+    private static final String URL = 
+            "jdbc:postgresql://localhost:5432/postgres?currentSchema=public";
+
     /** Имя пользователя базы данных. */
     private static final String USER = "postgres";
-    
+
     /** Пароль пользователя базы данных. */
     private static final String PASSWORD = "28032007";
 
@@ -31,9 +32,10 @@ public class DatabaseConnection {
     }
 
     /**
-     * Приватный конструктор для предотвращения создания экземпляров утилитарного класса.
+     * Приватный конструктор для предотвращения создания экземпляров.
      */
-    private DatabaseConnection() {}
+    private DatabaseConnection() {
+    }
 
     /**
      * Создает и возвращает новое подключение к базе данных.

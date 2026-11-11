@@ -41,45 +41,71 @@ public class NewsService {
      * @param title   заголовок
      * @param content текст
      * @param author  логин автора
-     * @throws IllegalArgumentException если заголовок или текст пусты, или уже существуют
+     * @throws IllegalArgumentException если поля пусты или уже есть
      * @throws SQLException             при ошибках работы с базой данных
      */
-    public void createNews(String title, String content, String author) throws SQLException {
-        if (title == null || title.trim().isEmpty() || content == null || content.trim().isEmpty()) {
-            throw new IllegalArgumentException("Заголовок и текст новости не могут быть пустыми.");
+    public void createNews(String title, String content, String author) 
+            throws SQLException {
+        if (title == null || title.trim().isEmpty() 
+                || content == null || content.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Заголовок и текст новости не могут быть пустыми."
+            );
         }
-        
+
         if (newsRepository.existsByTitle(title.trim())) {
-            throw new IllegalArgumentException("Новость с таким заголовком уже существует.");
+            throw new IllegalArgumentException(
+                    "Новость с таким заголовком уже существует."
+            );
         }
         if (newsRepository.existsByContent(content.trim())) {
-            throw new IllegalArgumentException("Новость с таким текстом уже существует.");
+            throw new IllegalArgumentException(
+                    "Новость с таким текстом уже существует."
+            );
         }
-        
+
         newsRepository.save(title.trim(), content.trim(), author);
     }
 
     /**
-     * Редактирует существующую новость с проверкой входных данных и уникальности.
+     * Редактирует новость с проверкой данных и уникальности.
      *
      * @param id      идентификатор новости
      * @param title   новый заголовок
      * @param content новый текст
-     * @throws IllegalArgumentException если заголовок или текст пусты, или уже существуют
+     * @throws IllegalArgumentException если поля пусты или уже есть
      * @throws SQLException             при ошибках работы с базой данных
      */
-    public void updateNews(int id, String title, String content) throws SQLException {
-        if (title == null || title.trim().isEmpty() || content == null || content.trim().isEmpty()) {
-            throw new IllegalArgumentException("Заголовок и текст новости не могут быть пустыми.");
+    public void updateNews(int id, String title, String content) 
+            throws SQLException {
+        if (title == null || title.trim().isEmpty() 
+                || content == null || content.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Заголовок и текст новости не могут быть пустыми."
+            );
         }
-        
+
         if (newsRepository.existsByTitle(title.trim())) {
-            throw new IllegalArgumentException("Новость с таким заголовком уже существует.");
+            throw new IllegalArgumentException(
+                    "Новость с таким заголовком уже существует."
+            );
         }
         if (newsRepository.existsByContent(content.trim())) {
-            throw new IllegalArgumentException("Новость с таким текстом уже существует.");
+            throw new IllegalArgumentException(
+                    "Новость с таким текстом уже существует."
+            );
         }
-        
+
         newsRepository.update(id, title.trim(), content.trim());
+    }
+
+    /**
+     * Удаляет новость по идентификатору.
+     *
+     * @param id идентификатор новости
+     * @throws SQLException при ошибках работы с базой данных
+     */
+    public void deleteNews(int id) throws SQLException {
+        newsRepository.deleteById(id);
     }
 }

@@ -17,7 +17,13 @@ import java.util.Map;
 @RequestMapping("/api/register")
 public class RegisterController {
 
-    /** Сервис для работы с логикой аутентификации и регистрации. */
+    /** Имя атрибута сессии для текущего пользователя. */
+    private static final String SESSION_USER_KEY = "currentUser";
+
+    /** Код ошибки PostgreSQL при нарушении уникальности. */
+    private static final String PG_UNIQUE_VIOLATION = "23505";
+
+    /** Сервис для работы с логикой регистрации. */
     private final AuthService authService;
 
     /**
@@ -32,29 +38,53 @@ public class RegisterController {
     /**
      * Обрабатывает POST-запрос для регистрации нового пользователя.
      *
-     * @param username логин нового пользователя
-     * @param password пароль нового пользователя
+     * @param username логин
+     * @param password пароль
+     * @param age      возраст
+     * @param gender   пол
+     * @param city     город
      * @param session  текущая HTTP-сессия
-     * @return ответ с данными зарегистрированного пользователя или сообщением об ошибке
+     * @return ответ с данными зарегистрированного пользователя
      */
     @PostMapping
-    public ResponseEntity<?> register(@RequestParam String username, @RequestParam String password, HttpSession session) {
+    public ResponseEntity<?> register(
+            @RequestParam String username,
+            @RequestParam String password,
+            @RequestParam(required = false) Integer age,
+            @RequestParam(required = false) String gender,
+            @RequestParam(required = false) String city,
+            HttpSession session) {
+
         try {
-            User user = authService.register(username, password);
-            session.setAttribute("currentUser", user);
+            User user = authService.register(
+                    username, password, age, gender, city
+            );
+            session.setAttribute(SESSION_USER_KEY, user);
             return ResponseEntity.ok(Map.of(
-                "success", true, 
-                "username", user.getUsername(), 
-                "role", user.getRole(),
-                "avatarPath", user.getAvatarPath()
+                    "success", true,
+                    "username", user.getUsername(),
+                    "role", user.getRole(),
+                    "avatarPath", user.getAvatarPath()
             ));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+            return ResponseEntity.badRequest()
+                    .body(Map.of(
+                            "success", false,
+                            "message", e.getMessage()
+                    ));
         } catch (SQLException e) {
-            if ("23505".equals(e.getSQLState())) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("success", false, "message", "Пользователь уже существует."));
+            if (PG_UNIQUE_VIOLATION.equals(e.getSQLState())) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(Map.of(
+                                "success", false,
+                                "message", "Пользователь уже существует."
+                        ));
             }
-            return ResponseEntity.internalServerError().body(Map.of("success", false, "message", "Ошибка БД."));
+            return ResponseEntity.internalServerError()
+                    .body(Map.of(
+                            "success", false,
+                            "message", "Ошибка БД."
+                    ));
         }
     }
 }
