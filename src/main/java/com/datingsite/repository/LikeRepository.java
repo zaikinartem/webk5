@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Слой доступа к данным (Data Access Object) для работы с таблицей likes.
+ * Слой доступа к данным (Data Access Object) для таблицы likes.
  * Отвечает за добавление, удаление и получение лайков.
  */
 @Repository
@@ -90,7 +90,8 @@ public class LikeRepository {
                 user.setId(rs.getInt("id"));
                 user.setUsername(rs.getString("username"));
                 user.setAvatarPath(rs.getString("avatar_path"));
-                user.setAge(rs.getInt("age"));
+                user.setAge(rs.getObject("age") != null 
+                        ? rs.getInt("age") : null);
                 user.setGender(rs.getString("gender"));
                 user.setCity(rs.getString("city"));
                 users.add(user);

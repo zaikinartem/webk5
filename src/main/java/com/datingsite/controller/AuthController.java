@@ -93,10 +93,16 @@ public class AuthController {
         User sessionUser = (User) session.getAttribute(SESSION_USER_KEY);
         if (sessionUser != null) {
             try {
-                User freshUser = authService.getAllUsers().stream()
-                        .filter(u -> u.getId().equals(sessionUser.getId()))
-                        .findFirst()
-                        .orElse(sessionUser);
+                User freshUser = authService.getUserById(
+                        sessionUser.getId()
+                );
+                
+                if (freshUser == null) {
+                    session.invalidate();
+                    return ResponseEntity.ok(
+                            Map.of("authenticated", false)
+                    );
+                }
 
                 session.setAttribute(SESSION_USER_KEY, freshUser);
 

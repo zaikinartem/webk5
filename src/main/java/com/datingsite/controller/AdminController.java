@@ -25,10 +25,10 @@ public class AdminController {
     /** Имя атрибута сессии для текущего пользователя. */
     private static final String SESSION_USER_KEY = "currentUser";
 
-    /** Код ошибки PostgreSQL при нарушении уникальности (дубликат). */
+    /** Код ошибки PostgreSQL при нарушении уникальности. */
     private static final String PG_UNIQUE_VIOLATION = "23505";
 
-    /** Код ошибки PostgreSQL при срабатывании триггера (защита админа). */
+    /** Код ошибки PostgreSQL при срабатывании триггера. */
     private static final String PG_TRIGGER_EXCEPTION = "P0001";
 
     /** Имя папки для загрузки файлов. */
@@ -206,6 +206,14 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("error", "Доступ запрещен."));
         }
+
+        User currentUser = (User) session.getAttribute(SESSION_USER_KEY);
+        
+        if (currentUser.getId() == id) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Вы не можете удалить самого себя."));
+        }
+
         try {
             authService.deleteUser(id);
             return ResponseEntity.ok(Map.of("success", true));

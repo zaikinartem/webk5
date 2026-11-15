@@ -3,35 +3,35 @@
  * Все файлы шрифтов находятся в папке src/fonts.
  */
 @font-face {
-  font-family: 'Inter';
-  src: url('./fonts/Inter_18pt-Regular.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'Inter';
+    src: url('./fonts/Inter_18pt-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'Inter';
-  src: url('./fonts/Inter_18pt-Medium.ttf') format('truetype');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'Inter';
+    src: url('./fonts/Inter_18pt-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'Inter';
-  src: url('./fonts/Inter_18pt-SemiBold.ttf') format('truetype');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'Inter';
+    src: url('./fonts/Inter_18pt-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
-  font-family: 'Inter';
-  src: url('./fonts/Inter_18pt-Bold.ttf') format('truetype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
+    font-family: 'Inter';
+    src: url('./fonts/Inter_18pt-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
 }
 
 /*
@@ -39,9 +39,9 @@
  * Убирает стандартные отступы и задает правильную модель расчета размеров.
  */
 * {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 /*
@@ -49,59 +49,59 @@
  * Устанавливает шрифт по умолчанию и фоновый цвет.
  */
 body {
-  font-family: 'Inter', sans-serif;
-  background-color: #F9FAFB;
-  color: #1E293B;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    font-family: 'Inter', sans-serif;
+    background-color: #F9FAFB;
+    color: #1E293B;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 /*
  * Стили для ссылок.
  */
 a {
-  color: inherit;
-  text-decoration: none;
-  transition: color 0.2s;
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s;
 }
 
 a:hover {
-  color: #FF4B5C;
+    color: #FF4B5C;
 }
 
 /*
  * Базовые стили для кнопок.
  */
 button {
-  font-family: 'Inter', sans-serif;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
 }
 
 button:active {
-  transform: scale(0.98);
+    transform: scale(0.98);
 }
 
 /*
  * Базовые стили для полей ввода.
  */
 input, select, textarea {
-  font-family: 'Inter', sans-serif;
-  font-size: 15px;
-  border: 1px solid #E2E8F0;
-  border-radius: 8px;
-  padding: 10px 14px;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 input:focus, select:focus, textarea:focus {
-  border-color: #FF4B5C;
-  box-shadow: 0 0 0 3px rgba(255, 75, 92, 0.1);
+    border-color: #FF4B5C;
+    box-shadow: 0 0 0 3px rgba(255, 75, 92, 0.1);
 }
 
 button:focus-visible {
-  outline: 2px solid #FF4B5C;
-  outline-offset: 2px;
+    outline: 2px solid #FF4B5C;
+    outline-offset: 2px;
 }

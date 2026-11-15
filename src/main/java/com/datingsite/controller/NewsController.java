@@ -37,10 +37,10 @@ public class NewsController {
     }
 
     /**
-     * Вспомогательный метод для проверки прав на редактирование новостей.
+     * Вспомогательный метод для проверки прав на редактирование.
      *
      * @param session текущая HTTP-сессия
-     * @return true, если пользователь является администратором или модератором
+     * @return true, если пользователь — админ или модератор
      */
     private boolean canManageNews(HttpSession session) {
         User user = (User) session.getAttribute(SESSION_USER_KEY);
@@ -52,11 +52,37 @@ public class NewsController {
     }
 
     /**
-     * Получает список всех новостей (доступно всем).
+     * Получает страницу новостей с пагинацией.
      *
-     * @return список новостей
+     * @param page номер страницы (по умолчанию 0)
+     * @param size количество новостей на странице (по умолчанию 5)
+     * @return JSON с новостями и метаданными пагинации
      */
     @GetMapping
+    public ResponseEntity<?> getNewsPage(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
+        try {
+            int safePage = Math.max(page, 0);
+            int safeSize = Math.max(size, 1);
+            
+            Map<String, Object> response = 
+                    newsService.getNewsPage(safePage, safeSize);
+            return ResponseEntity.ok(response);
+        } catch (SQLException e) {
+            return ResponseEntity.internalServerError()
+                    .body(Map.of(
+                            "error", "Ошибка БД при получении новостей."
+                    ));
+        }
+    }
+
+    /**
+     * Получает полный список новостей (для панели управления).
+     *
+     * @return список всех новостей
+     */
+    @GetMapping("/all")
     public ResponseEntity<?> getAllNews() {
         try {
             List<News> newsList = newsService.getAllNews();

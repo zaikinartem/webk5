@@ -22,6 +22,10 @@ public class UserRepository {
     private static final String SQL_FIND_BY_CREDENTIALS = 
             "SELECT * FROM users WHERE username = ? AND password = ?";
 
+    /** SQL-запрос для поиска пользователя по id. */
+    private static final String SQL_FIND_BY_ID = 
+            "SELECT * FROM users WHERE id = ?";
+
     /** SQL-запрос для добавления нового пользователя. */
     private static final String SQL_INSERT_USER = 
             "INSERT INTO users (" +
@@ -63,6 +67,10 @@ public class UserRepository {
     private static final String SQL_DELETE_USER = 
             "DELETE FROM users WHERE id = ?";
 
+    /** SQL-запрос для проверки существования по id. */
+    private static final String SQL_CHECK_ID = 
+            "SELECT COUNT(*) FROM users WHERE id = ?";
+
     /**
      * Ищет пользователя по логину и паролю.
      *
@@ -79,6 +87,28 @@ public class UserRepository {
 
             pstmt.setString(1, username);
             pstmt.setString(2, password);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return mapRowToUser(rs);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Ищет пользователя по идентификатору.
+     *
+     * @param id идентификатор пользователя
+     * @return найденный объект {@link User} или {@code null}
+     * @throws SQLException при ошибках работы с базой данных
+     */
+    public User findById(int id) throws SQLException {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = 
+                     conn.prepareStatement(SQL_FIND_BY_ID)) {
+
+            pstmt.setInt(1, id);
             ResultSet rs = pstmt.executeQuery();
 
             if (rs.next()) {
@@ -251,6 +281,24 @@ public class UserRepository {
 
             pstmt.setInt(1, id);
             pstmt.executeUpdate();
+        }
+    }
+
+    /**
+     * Проверяет, существует ли пользователь с таким идентификатором.
+     *
+     * @param id идентификатор пользователя
+     * @return true, если пользователь найден
+     * @throws SQLException при ошибках работы с базой данных
+     */
+    public boolean existsById(int id) throws SQLException {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = 
+                     conn.prepareStatement(SQL_CHECK_ID)) {
+
+            pstmt.setInt(1, id);
+            ResultSet rs = pstmt.executeQuery();
+            return rs.next() && rs.getInt(1) > 0;
         }
     }
 

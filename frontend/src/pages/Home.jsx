@@ -16,6 +16,7 @@ export default function Home() {
     const [users, setUsers] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
     const [notification, setNotification] = useState(null);
+    const [likedUserIds, setLikedUserIds] = useState([]);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -23,6 +24,12 @@ export default function Home() {
             .then(res => {
                 if (res.data.authenticated) {
                     setCurrentUser(res.data);
+                    return api.get('/user/liked');
+                }
+            })
+            .then(res => {
+                if (res) {
+                    setLikedUserIds(res.data.map(u => u.id));
                 }
             })
             .catch(() => {});
@@ -56,7 +63,10 @@ export default function Home() {
             return;
         }
         api.post(`/user/like/${targetId}`)
-            .then(() => showToast('Лайк отправлен!', 'success'))
+            .then(() => {
+                setLikedUserIds([...likedUserIds, targetId]);
+                showToast('Лайк отправлен!', 'success');
+            })
             .catch((error) => 
                 showToast(
                     error.response?.data?.error || 'Ошибка лайка.', 
@@ -78,7 +88,8 @@ export default function Home() {
     return (
         <div style={{
             background: '#F9FAFB', 
-            backgroundImage: 'radial-gradient(#F1F5F9 1px, transparent 1px)', 
+            backgroundImage: 
+                'radial-gradient(#F1F5F9 1px, transparent 1px)', 
             backgroundSize: '20px 20px', 
             minHeight: '100vh', 
             fontFamily: "'Inter', sans-serif", 
@@ -188,7 +199,8 @@ export default function Home() {
                                     fontWeight: '600', 
                                     width: 'auto', 
                                     marginTop: 0, 
-                                    boxShadow: '0 4px 6px -1px rgba(255, 75, 92, 0.3)'
+                                    boxShadow: 
+                                        '0 4px 6px -1px rgba(255, 75, 92, 0.3)'
                                 }}>
                                     Войти
                                 </button>
@@ -270,7 +282,8 @@ export default function Home() {
                                             width: 'auto', 
                                             marginTop: 0, 
                                             boxShadow: 
-                                                '0 10px 15px -3px rgba(255, 75, 92, 0.4)', 
+                                                '0 10px 15px -3px ' +
+                                                'rgba(255, 75, 92, 0.4)', 
                                             transition: 'transform 0.2s'
                                         }} 
                                         onMouseEnter={(e) => 
@@ -333,7 +346,8 @@ export default function Home() {
                                     width: 'auto', 
                                     marginTop: 0, 
                                     boxShadow: 
-                                        '0 10px 15px -3px rgba(255, 75, 92, 0.4)'
+                                        '0 10px 15px -3px ' +
+                                        'rgba(255, 75, 92, 0.4)'
                                 }}>
                                     Перейти в профиль
                                 </button>
@@ -486,6 +500,20 @@ export default function Home() {
                                     textAlign: 'center'
                                 }}>
                                     Это вы
+                                </div>
+                            ) : likedUserIds.includes(u.id) ? (
+                                <div style={{
+                                    width: '100%', 
+                                    background: '#FFF1F2', 
+                                    color: '#FF4B5C', 
+                                    padding: '14px', 
+                                    borderRadius: '12px', 
+                                    fontWeight: '600', 
+                                    fontSize: '15px', 
+                                    textAlign: 'center',
+                                    border: '1px solid #FECDD3'
+                                }}>
+                                    Вы уже лайкнули
                                 </div>
                             ) : (
                                 <button 

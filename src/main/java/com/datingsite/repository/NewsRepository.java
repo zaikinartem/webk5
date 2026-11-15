@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Слой доступа к данным (Data Access Object) для работы с таблицей news.
+ * Слой доступа к данным (Data Access Object) для таблицы news.
  */
 @Repository
 public class NewsRepository {
@@ -21,21 +21,33 @@ public class NewsRepository {
     private static final String SQL_FIND_ALL = 
             "SELECT * FROM news ORDER BY created_at DESC";
 
+    /** SQL-запрос для получения новостей с пагинацией. */
+    private static final String SQL_FIND_PAGINATED = 
+            "SELECT * FROM news ORDER BY created_at DESC LIMIT ? OFFSET ?";
+
+    /** SQL-запрос для получения общего количества новостей. */
+    private static final String SQL_COUNT_ALL = 
+            "SELECT COUNT(*) FROM news";
+
     /** SQL-запрос для добавления новой новости. */
     private static final String SQL_INSERT = 
             "INSERT INTO news (title, content, author) VALUES (?, ?, ?)";
 
-    /** SQL-запрос для обновления существующей новости. */
+    /** SQL-запрос для обновления новости. */
     private static final String SQL_UPDATE = 
             "UPDATE news SET title = ?, content = ? WHERE id = ?";
 
-    /** SQL-запрос для проверки существования новости с таким заголовком. */
+    /** SQL-запрос для проверки существования по заголовку. */
     private static final String SQL_CHECK_TITLE = 
             "SELECT COUNT(*) FROM news WHERE title = ?";
 
-    /** SQL-запрос для проверки существования новости с таким текстом. */
+    /** SQL-запрос для проверки существования по тексту. */
     private static final String SQL_CHECK_CONTENT = 
             "SELECT COUNT(*) FROM news WHERE content = ?";
+
+    /** SQL-запрос для проверки существования по id. */
+    private static final String SQL_CHECK_ID = 
+            "SELECT COUNT(*) FROM news WHERE id = ?";
 
     /** SQL-запрос для удаления новости. */
     private static final String SQL_DELETE = 
@@ -55,23 +67,63 @@ public class NewsRepository {
              ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
-                News news = new News();
-                news.setId(rs.getInt("id"));
-                news.setTitle(rs.getString("title"));
-                news.setContent(rs.getString("content"));
-                news.setAuthor(rs.getString("author"));
-                news.setCreatedAt(rs.getTimestamp("created_at"));
-                newsList.add(news);
+                newsList.add(mapRowToNews(rs));
             }
         }
         return newsList;
     }
 
     /**
-     * Сохраняет новую новость в базу данных.
+     * Получает список новостей с пагинацией.
+     *
+     * @param page номер страницы (начиная с 0)
+     * @param size количество новостей на странице
+     * @return список объектов {@link News}
+     * @throws SQLException при ошибках работы с базой данных
+     */
+    public List<News> findPaginated(int page, int size) throws SQLException {
+        List<News> newsList = new ArrayList<>();
+        int offset = page * size;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = 
+                     conn.prepareStatement(SQL_FIND_PAGINATED)) {
+
+            pstmt.setInt(1, size);
+            pstmt.setInt(2, offset);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                newsList.add(mapRowToNews(rs));
+            }
+        }
+        return newsList;
+    }
+
+    /**
+     * Получает общее количество новостей.
+     *
+     * @return количество новостей
+     * @throws SQLException при ошибках работы с базой данных
+     */
+    public int countAll() throws SQLException {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = 
+                     conn.prepareStatement(SQL_COUNT_ALL);
+             ResultSet rs = pstmt.executeQuery()) {
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Сохраняет новую новость.
      *
      * @param title   заголовок
-     * @param content текст новости
+     * @param content текст
      * @param author  логин автора
      * @throws SQLException при ошибках работы с базой данных
      */
@@ -89,7 +141,7 @@ public class NewsRepository {
     }
 
     /**
-     * Обновляет заголовок и текст существующей новости.
+     * Обновляет существующую новость.
      *
      * @param id      идентификатор новости
      * @param title   новый заголовок
@@ -117,14 +169,7 @@ public class NewsRepository {
      * @throws SQLException при ошибках работы с базой данных
      */
     public boolean existsByTitle(String title) throws SQLException {
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = 
-                     conn.prepareStatement(SQL_CHECK_TITLE)) {
-
-            pstmt.setString(1, title);
-            ResultSet rs = pstmt.executeQuery();
-            return rs.next() && rs.getInt(1) > 0;
-        }
+        return existsByField(SQL_CHECK_TITLE, title);
     }
 
     /**
@@ -135,18 +180,29 @@ public class NewsRepository {
      * @throws SQLException при ошибках работы с базой данных
      */
     public boolean existsByContent(String content) throws SQLException {
+        return existsByField(SQL_CHECK_CONTENT, content);
+    }
+
+    /**
+     * Проверяет, существует ли новость с таким идентификатором.
+     *
+     * @param id идентификатор новости
+     * @return true, если новость найдена
+     * @throws SQLException при ошибках работы с базой данных
+     */
+    public boolean existsById(int id) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = 
-                     conn.prepareStatement(SQL_CHECK_CONTENT)) {
+                     conn.prepareStatement(SQL_CHECK_ID)) {
 
-            pstmt.setString(1, content);
+            pstmt.setInt(1, id);
             ResultSet rs = pstmt.executeQuery();
             return rs.next() && rs.getInt(1) > 0;
         }
     }
 
     /**
-     * Удаляет новость по её идентификатору.
+     * Удаляет новость по идентификатору.
      *
      * @param id идентификатор новости
      * @throws SQLException при ошибках работы с базой данных
@@ -159,5 +215,31 @@ public class NewsRepository {
             pstmt.setInt(1, id);
             pstmt.executeUpdate();
         }
+    }
+
+    /**
+     * Вспомогательный метод для проверки существования по строке.
+     */
+    private boolean existsByField(String sql, String field) 
+            throws SQLException {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, field);
+            ResultSet rs = pstmt.executeQuery();
+            return rs.next() && rs.getInt(1) > 0;
+        }
+    }
+
+    /**
+     * Преобразует строку ResultSet в объект News.
+     */
+    private News mapRowToNews(ResultSet rs) throws SQLException {
+        News news = new News();
+        news.setId(rs.getInt("id"));
+        news.setTitle(rs.getString("title"));
+        news.setContent(rs.getString("content"));
+        news.setAuthor(rs.getString("author"));
+        news.setCreatedAt(rs.getTimestamp("created_at"));
+        return news;
     }
 }

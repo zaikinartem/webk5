@@ -176,6 +176,17 @@ public class AuthService {
     }
 
     /**
+     * Получает пользователя по идентификатору.
+     *
+     * @param id идентификатор пользователя
+     * @return объект {@link User} или {@code null}
+     * @throws SQLException при ошибках работы с базой данных
+     */
+    public User getUserById(int id) throws SQLException {
+        return userRepository.findById(id);
+    }
+
+    /**
      * Изменяет роль пользователя.
      *
      * @param id   идентификатор пользователя
@@ -226,5 +237,16 @@ public class AuthService {
         user.setGender(gender);
         user.setCity(city);
         return user;
+    }
+
+    /**
+     * Проверяет, существует ли пользователь с таким ID.
+     *
+     * @param id идентификатор пользователя
+     * @return true, если пользователь найден
+     * @throws SQLException при ошибках работы с базой данных
+     */
+    public boolean userExists(int id) throws SQLException {
+        return userRepository.existsById(id);
     }
 }

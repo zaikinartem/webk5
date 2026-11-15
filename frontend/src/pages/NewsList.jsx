@@ -2,9 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
+/** Время отображения уведомления в миллисекундах. */
+const TOAST_DURATION_MS = 3000;
+
 /**
  * Компонент новостной ленты.
- * Отображает список новостей, статус сервера и элементы навигации.
+ * Отображает новости постранично (по 5 штук) с элементами навигации.
  *
  * @returns {JSX.Element} JSX-разметка новостной ленты
  */
@@ -13,10 +16,16 @@ export default function NewsList() {
     const [user, setUser] = useState(null);
     const [info, setInfo] = useState({ dateTime: '', visitCount: 0 });
     const [deleteTarget, setDeleteTarget] = useState(null);
+    const [notification, setNotification] = useState(null);
+    
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
+    const [isLoading, setIsLoading] = useState(true);
+
     const navigate = useNavigate();
 
     useEffect(() => {
-        loadNews();
+        loadNews(currentPage);
         api.get('/auth')
             .then(res => {
                 if (res.data.authenticated) setUser(res.data);
@@ -25,17 +34,36 @@ export default function NewsList() {
         api.get('/info')
             .then(res => setInfo(res.data))
             .catch(() => {});
-    }, []);
+    }, [currentPage]);
 
     /**
-     * Загружает список новостей с сервера.
+     * Показывает всплывающее уведомление.
+     *
+     * @param {string} message текст сообщения
+     * @param {string} type тип ('success' или 'error')
      */
-    const loadNews = () => {
-        api.get('/news')
-            .then(response => setNews(response.data))
-            .catch(error => 
-                console.error('Ошибка загрузки новостей:', error)
-            );
+    const showToast = (message, type) => {
+        setNotification({ message, type });
+        setTimeout(() => setNotification(null), TOAST_DURATION_MS);
+    };
+
+    /**
+     * Загружает страницу новостей с сервера.
+     *
+     * @param {number} page номер страницы
+     */
+    const loadNews = (page) => {
+        setIsLoading(true);
+        api.get(`/news?page=${page}&size=5`)
+            .then(response => {
+                setNews(response.data.news);
+                setTotalPages(response.data.totalPages);
+                setIsLoading(false);
+            })
+            .catch(error => {
+                console.error('Ошибка загрузки новостей:', error);
+                setIsLoading(false);
+            });
     };
 
     /**
@@ -56,13 +84,18 @@ export default function NewsList() {
         
         api.delete(`/news/${deleteTarget.id}`)
             .then(() => {
-                setNews(news.filter(n => n.id !== deleteTarget.id));
                 setDeleteTarget(null);
+                if (news.length === 1 && currentPage > 0) {
+                    setCurrentPage(currentPage - 1);
+                } else {
+                    loadNews(currentPage);
+                }
             })
             .catch((error) => {
-                alert(
+                showToast(
                     error.response?.data?.error 
-                    || 'Ошибка удаления новости'
+                    || 'Ошибка удаления новости',
+                    'error'
                 );
                 setDeleteTarget(null);
             });
@@ -81,6 +114,32 @@ export default function NewsList() {
             fontFamily: "'Inter', sans-serif", 
             color: '#1E293B'
         }}>
+            {notification && (
+                <div style={{
+                    position: 'fixed', 
+                    top: '24px', 
+                    right: '24px',
+                    background: notification.type === 'success' 
+                        ? '#ECFDF5' 
+                        : '#FEF2F2',
+                    color: notification.type === 'success' 
+                        ? '#065F46' 
+                        : '#991B1B',
+                    padding: '16px 24px', 
+                    borderRadius: '12px', 
+                    zIndex: 1000, 
+                    fontWeight: '600',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                    border: `1px solid ${
+                        notification.type === 'success' 
+                            ? '#A7F3D0' 
+                            : '#FECACA'
+                    }`
+                }}>
+                    {notification.message}
+                </div>
+            )}
+
             {deleteTarget && (
                 <div style={{
                     position: 'fixed', 
@@ -354,11 +413,12 @@ export default function NewsList() {
                     Новостная лента
                 </h1>
 
-                {news.length === 0 ? (
-                    <p style={{
-                        textAlign: 'center', 
-                        color: '#64748B'
-                    }}>
+                {isLoading ? (
+                    <p style={{ textAlign: 'center', color: '#64748B' }}>
+                        Загрузка новостей...
+                    </p>
+                ) : news.length === 0 ? (
+                    <p style={{ textAlign: 'center', color: '#64748B' }}>
                         Пока новостей нет...
                     </p>
                 ) : (
@@ -484,6 +544,66 @@ export default function NewsList() {
                                 )}
                             </div>
                         ))}
+                    </div>
+                )}
+
+                {totalPages > 1 && (
+                    <div style={{
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        alignItems: 'center', 
+                        gap: '16px', 
+                        marginTop: '40px'
+                    }}>
+                        <button 
+                            disabled={currentPage === 0}
+                            onClick={() => setCurrentPage(currentPage - 1)}
+                            style={{
+                                background: currentPage === 0 
+                                    ? '#F1F5F9' 
+                                    : '#FF4B5C',
+                                color: currentPage === 0 
+                                    ? '#94A3B8' 
+                                    : 'white',
+                                padding: '10px 20px',
+                                border: 'none',
+                                borderRadius: '8px',
+                                cursor: currentPage === 0 
+                                    ? 'not-allowed' 
+                                    : 'pointer',
+                                fontWeight: '600',
+                                width: 'auto',
+                                marginTop: 0
+                            }}
+                        >
+                            Назад
+                        </button>
+                        <span style={{ fontWeight: '600', color: '#475569' }}>
+                            Страница {currentPage + 1} из {totalPages}
+                        </span>
+                        <button 
+                            disabled={currentPage === totalPages - 1}
+                            onClick={() => setCurrentPage(currentPage + 1)}
+                            style={{
+                                background: currentPage === totalPages - 1 
+                                    ? '#F1F5F9' 
+                                    : '#FF4B5C',
+                                color: currentPage === totalPages - 1 
+                                    ? '#94A3B8' 
+                                    : 'white',
+                                padding: '10px 20px',
+                                border: 'none',
+                                borderRadius: '8px',
+                                cursor: currentPage === totalPages - 1 
+                                    ? 'not-allowed' 
+                                    : 'pointer',
+                                fontWeight: '600',
+                                width: 'auto',
+                                marginTop: 0
+                            }}
+                        >
+                            Вперед
+                        </button>
                     </div>
                 )}
             </div>

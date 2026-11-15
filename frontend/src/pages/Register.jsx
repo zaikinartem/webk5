@@ -28,6 +28,11 @@ export default function Register() {
         e.preventDefault();
         setErrorMsg('');
 
+        if (!username.trim() || !password.trim()) {
+            setErrorMsg('Заполните логин и пароль.');
+            return;
+        }
+
         const params = new URLSearchParams();
         params.append('username', username);
         params.append('password', password);

@@ -6,7 +6,7 @@ import api from '../services/api';
 const TOAST_DURATION_MS = 3000;
 
 /**
- * Компонент панели управления новостями для модераторов и администраторов.
+ * Компонент панели управления новостями.
  * Позволяет создавать, редактировать и удалять новости.
  *
  * @returns {JSX.Element} JSX-разметка панели управления
@@ -17,6 +17,7 @@ export default function NewsManage() {
     const [content, setContent] = useState('');
     const [editingId, setEditingId] = useState(null);
     const [notification, setNotification] = useState(null);
+    const [deleteTarget, setDeleteTarget] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -28,7 +29,7 @@ export default function NewsManage() {
      * Загружает список всех новостей с сервера.
      */
     const loadNews = () => {
-        api.get('/news')
+        api.get('/news/all')
             .then(response => setNews(response.data))
             .catch(() => 
                 showToast('Ошибка загрузки новостей', 'error')
@@ -36,8 +37,7 @@ export default function NewsManage() {
     };
 
     /**
-     * Проверяет права доступа текущего пользователя к панели.
-     * Перенаправляет на ленту, если прав недостаточно.
+     * Проверяет права доступа текущего пользователя.
      */
     const checkAccess = () => {
         api.get('/auth').then(res => {
@@ -54,7 +54,7 @@ export default function NewsManage() {
      * Показывает всплывающее уведомление.
      *
      * @param {string} message текст сообщения
-     * @param {string} type тип уведомления ('success' или 'error')
+     * @param {string} type тип ('success' или 'error')
      */
     const showToast = (message, type) => {
         setNotification({ message, type });
@@ -62,7 +62,7 @@ export default function NewsManage() {
     };
 
     /**
-     * Обрабатывает отправку формы (создание или обновление новости).
+     * Обрабатывает отправку формы (создание или обновление).
      *
      * @param {Event} e событие отправки формы
      */
@@ -113,7 +113,7 @@ export default function NewsManage() {
     };
 
     /**
-     * Заполняет форму данными выбранной новости для редактирования.
+     * Заполняет форму данными выбранной новости.
      *
      * @param {Object} item объект новости
      */
@@ -122,6 +122,28 @@ export default function NewsManage() {
         setTitle(item.title);
         setContent(item.content);
         window.scrollTo(0, 0);
+    };
+
+    /**
+     * Подтверждает и выполняет удаление новости.
+     */
+    const confirmDelete = () => {
+        if (!deleteTarget) return;
+        
+        api.delete(`/news/${deleteTarget.id}`)
+            .then(() => {
+                setNews(news.filter(n => n.id !== deleteTarget.id));
+                showToast('Новость удалена', 'success');
+                setDeleteTarget(null);
+            })
+            .catch((error) => {
+                showToast(
+                    error.response?.data?.error 
+                    || 'Ошибка удаления', 
+                    'error'
+                );
+                setDeleteTarget(null);
+            });
     };
 
     /**
@@ -163,6 +185,85 @@ export default function NewsManage() {
                     }`
                 }}>
                     {notification.message}
+                </div>
+            )}
+
+            {deleteTarget && (
+                <div style={{
+                    position: 'fixed', 
+                    top: 0, 
+                    left: 0, 
+                    width: '100vw', 
+                    height: '100vh', 
+                    background: 'rgba(15, 23, 42, 0.6)', 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    zIndex: 2000
+                }}>
+                    <div style={{
+                        background: '#fff', 
+                        padding: '32px', 
+                        borderRadius: '16px', 
+                        maxWidth: '400px', 
+                        width: '90%', 
+                        textAlign: 'center', 
+                        boxShadow: 
+                            '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+                    }}>
+                        <h3 style={{
+                            marginTop: 0, 
+                            color: '#DC2626', 
+                            fontSize: '20px'
+                        }}>
+                            Удаление новости
+                        </h3>
+                        <p style={{
+                            color: '#64748B', 
+                            marginBottom: '24px'
+                        }}>
+                            Вы уверены, что хотите удалить новость 
+                            «{deleteTarget.title}»?
+                        </p>
+                        <div style={{
+                            display: 'flex', 
+                            gap: '12px', 
+                            justifyContent: 'center'
+                        }}>
+                            <button 
+                                onClick={() => setDeleteTarget(null)} 
+                                style={{
+                                    background: '#F1F5F9', 
+                                    color: '#475569', 
+                                    padding: '10px 20px', 
+                                    border: 'none', 
+                                    borderRadius: '8px', 
+                                    cursor: 'pointer', 
+                                    fontWeight: '600', 
+                                    width: 'auto', 
+                                    marginTop: 0
+                                }}
+                            >
+                                Отмена
+                            </button>
+                            <button 
+                                onClick={confirmDelete} 
+                                style={{
+                                    background: '#DC2626', 
+                                    color: 'white', 
+                                    padding: '10px 20px', 
+                                    border: 'none', 
+                                    borderRadius: '8px', 
+                                    cursor: 'pointer', 
+                                    fontWeight: '600', 
+                                    width: 'auto', 
+                                    marginTop: 0
+                                }}
+                            >
+                                Да, удалить
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 
@@ -351,23 +452,68 @@ export default function NewsManage() {
                                         .toLocaleString('ru-RU')}
                                 </div>
                             </div>
-                            <button 
-                                onClick={() => handleEdit(item)}
-                                style={{
-                                    background: '#F8FAFC', 
-                                    color: '#1E293B', 
-                                    padding: '8px 16px', 
-                                    border: '1px solid #E2E8F0', 
-                                    borderRadius: '8px', 
-                                    cursor: 'pointer', 
-                                    width: 'auto', 
-                                    marginTop: 0, 
-                                    fontWeight: '500', 
-                                    fontSize: '14px'
-                                }}
-                            >
-                                Редактировать
-                            </button>
+                            <div style={{
+                                display: 'flex', 
+                                gap: '8px'
+                            }}>
+                                <button 
+                                    onClick={() => handleEdit(item)}
+                                    style={{
+                                        background: '#F8FAFC', 
+                                        color: '#1E293B', 
+                                        padding: '8px 16px', 
+                                        border: '1px solid #E2E8F0', 
+                                        borderRadius: '8px', 
+                                        cursor: 'pointer', 
+                                        width: 'auto', 
+                                        marginTop: 0, 
+                                        fontWeight: '500', 
+                                        fontSize: '14px'
+                                    }}
+                                >
+                                    Редактировать
+                                </button>
+                                <button 
+                                    onClick={() => setDeleteTarget(item)}
+                                    style={{
+                                        background: '#FEF2F2', 
+                                        color: '#DC2626', 
+                                        border: 'none', 
+                                        borderRadius: '8px', 
+                                        padding: '8px', 
+                                        cursor: 'pointer', 
+                                        width: 'auto', 
+                                        marginTop: 0, 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        justifyContent: 'center', 
+                                        transition: 'background 0.2s'
+                                    }}
+                                    onMouseEnter={(e) => 
+                                        e.currentTarget.style.background = 
+                                            '#FEE2E2'
+                                    }
+                                    onMouseLeave={(e) => 
+                                        e.currentTarget.style.background = 
+                                            '#FEF2F2'
+                                    }
+                                    title="Удалить новость"
+                                >
+                                    <svg 
+                                        width="18" 
+                                        height="18" 
+                                        viewBox="0 0 24 24" 
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        strokeWidth="2" 
+                                        strokeLinecap="round" 
+                                        strokeLinejoin="round"
+                                    >
+                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     ))}
                 </div>

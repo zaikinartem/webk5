@@ -127,6 +127,14 @@ public class UserController {
         }
 
         try {
+            if (!authService.userExists(targetId)) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of(
+                                "error", 
+                                "Пользователь не найден."
+                        ));
+            }
+            
             likeRepository.saveLike(currentUser.getId(), targetId);
             return ResponseEntity.ok(Map.of(
                     "success", true,
