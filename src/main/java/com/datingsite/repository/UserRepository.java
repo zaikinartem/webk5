@@ -31,7 +31,7 @@ public class UserRepository {
             "INSERT INTO users (" +
             "username, password, role, avatar_path, " +
             "age, gender, city, login_count" +
-            ") VALUES (?, ?, ?, ?, ?, ?, ?, 1)";
+            ") VALUES (?, ?, ?, ?, ?, ?, ?, 1) RETURNING id";
 
     /** SQL-запрос для обновления аватара по логину. */
     private static final String SQL_UPDATE_AVATAR = 
@@ -128,9 +128,10 @@ public class UserRepository {
      * @param age        возраст
      * @param gender     пол
      * @param city       город
+     * @return идентификатор созданного пользователя
      * @throws SQLException при ошибках работы с базой данных
      */
-    public void save(String username, String password, String role, 
+    public int save(String username, String password, String role,
                      String avatarPath, Integer age, String gender, 
                      String city) throws SQLException {
         try (Connection conn = DatabaseConnection.getConnection();
@@ -144,7 +145,15 @@ public class UserRepository {
             pstmt.setObject(5, age);
             pstmt.setString(6, gender);
             pstmt.setString(7, city);
-            pstmt.executeUpdate();
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("id");
+                }
+                throw new SQLException(
+                        "Не удалось получить ID пользователя."
+                );
+            }
         }
     }
 

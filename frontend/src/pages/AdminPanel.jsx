@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
@@ -37,6 +37,15 @@ export default function AdminPanel() {
 
     const navigate = useNavigate();
 
+    /**
+     * Загружает список всех пользователей с сервера.
+     */
+    const loadUsers = useCallback(() => {
+        api.get('/admin/users')
+            .then(res => setUsers(res.data))
+            .catch(() => navigate('/profile'));
+    }, [navigate]);
+
     useEffect(() => {
         loadUsers();
         api.get('/auth')
@@ -46,16 +55,7 @@ export default function AdminPanel() {
                 }
             })
             .catch(() => {});
-    }, []);
-
-    /**
-     * Загружает список всех пользователей с сервера.
-     */
-    const loadUsers = () => {
-        api.get('/admin/users')
-            .then(res => setUsers(res.data))
-            .catch(() => navigate('/profile'));
-    };
+    }, [loadUsers]);
 
     /**
      * Показывает всплывающее уведомление.

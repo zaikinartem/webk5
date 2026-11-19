@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
@@ -20,46 +20,46 @@ export default function NewsManage() {
     const [deleteTarget, setDeleteTarget] = useState(null);
     const navigate = useNavigate();
 
-    useEffect(() => {
-        loadNews();
-        checkAccess();
-    }, []);
-
-    /**
-     * Загружает список всех новостей с сервера.
-     */
-    const loadNews = () => {
-        api.get('/news/all')
-            .then(response => setNews(response.data))
-            .catch(() => 
-                showToast('Ошибка загрузки новостей', 'error')
-            );
-    };
-
-    /**
-     * Проверяет права доступа текущего пользователя.
-     */
-    const checkAccess = () => {
-        api.get('/auth').then(res => {
-            const isAdmin = res.data.role === 'ADMIN';
-            const isModerator = res.data.role === 'MODERATOR';
-            
-            if (!res.data.authenticated || (!isAdmin && !isModerator)) {
-                navigate('/news');
-            }
-        });
-    };
-
     /**
      * Показывает всплывающее уведомление.
      *
      * @param {string} message текст сообщения
      * @param {string} type тип ('success' или 'error')
      */
-    const showToast = (message, type) => {
+    const showToast = useCallback((message, type) => {
         setNotification({ message, type });
         setTimeout(() => setNotification(null), TOAST_DURATION_MS);
-    };
+    }, []);
+
+    /**
+     * Загружает список всех новостей с сервера.
+     */
+    const loadNews = useCallback(() => {
+        api.get('/news/all')
+            .then(response => setNews(response.data))
+            .catch(() =>
+                showToast('Ошибка загрузки новостей', 'error')
+            );
+    }, [showToast]);
+
+    /**
+     * Проверяет права доступа текущего пользователя.
+     */
+    const checkAccess = useCallback(() => {
+        api.get('/auth').then(res => {
+            const isAdmin = res.data.role === 'ADMIN';
+            const isModerator = res.data.role === 'MODERATOR';
+
+            if (!res.data.authenticated || (!isAdmin && !isModerator)) {
+                navigate('/news');
+            }
+        });
+    }, [navigate]);
+
+    useEffect(() => {
+        loadNews();
+        checkAccess();
+    }, [checkAccess, loadNews]);
 
     /**
      * Обрабатывает отправку формы (создание или обновление).
@@ -510,7 +510,13 @@ export default function NewsManage() {
                                         strokeLinejoin="round"
                                     >
                                         <polyline points="3 6 5 6 21 6"></polyline>
-                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                        <path
+                                            d={
+                                                'M19 6v14a2 2 0 0 1-2 2H7a2 ' +
+                                                '2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 ' +
+                                                '2-2h4a2 2 0 0 1 2 2v2'
+                                            }
+                                        ></path>
                                     </svg>
                                 </button>
                             </div>

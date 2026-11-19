@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
@@ -24,36 +24,12 @@ export default function NewsList() {
 
     const navigate = useNavigate();
 
-    useEffect(() => {
-        loadNews(currentPage);
-        api.get('/auth')
-            .then(res => {
-                if (res.data.authenticated) setUser(res.data);
-            })
-            .catch(() => {});
-        api.get('/info')
-            .then(res => setInfo(res.data))
-            .catch(() => {});
-    }, [currentPage]);
-
     /**
-     * Показывает всплывающее уведомление.
-     *
-     * @param {string} message текст сообщения
-     * @param {string} type тип ('success' или 'error')
-     */
-    const showToast = (message, type) => {
-        setNotification({ message, type });
-        setTimeout(() => setNotification(null), TOAST_DURATION_MS);
-    };
-
-    /**
-     * Загружает страницу новостей с сервера.
+     * Загружает выбранную страницу новостной ленты.
      *
      * @param {number} page номер страницы
      */
-    const loadNews = (page) => {
-        setIsLoading(true);
+    const loadNews = useCallback((page) => {
         api.get(`/news?page=${page}&size=5`)
             .then(response => {
                 setNews(response.data.news);
@@ -64,6 +40,32 @@ export default function NewsList() {
                 console.error('Ошибка загрузки новостей:', error);
                 setIsLoading(false);
             });
+    }, []);
+
+    useEffect(() => {
+        loadNews(currentPage);
+    }, [currentPage, loadNews]);
+
+    useEffect(() => {
+        api.get('/auth')
+            .then(res => {
+                if (res.data.authenticated) setUser(res.data);
+            })
+            .catch(() => {});
+        api.get('/info')
+            .then(res => setInfo(res.data))
+            .catch(() => {});
+    }, []);
+
+    /**
+     * Показывает всплывающее уведомление.
+     *
+     * @param {string} message текст сообщения
+     * @param {string} type тип ('success' или 'error')
+     */
+    const showToast = (message, type) => {
+        setNotification({ message, type });
+        setTimeout(() => setNotification(null), TOAST_DURATION_MS);
     };
 
     /**
@@ -85,6 +87,7 @@ export default function NewsList() {
         api.delete(`/news/${deleteTarget.id}`)
             .then(() => {
                 setDeleteTarget(null);
+                setIsLoading(true);
                 if (news.length === 1 && currentPage > 0) {
                     setCurrentPage(currentPage - 1);
                 } else {
@@ -538,7 +541,13 @@ export default function NewsList() {
                                             strokeLinejoin="round"
                                         >
                                             <polyline points="3 6 5 6 21 6"></polyline>
-                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                            <path
+                                                d={
+                                                    'M19 6v14a2 2 0 0 1-2 2H7a2 ' +
+                                                    '2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 ' +
+                                                    '2-2h4a2 2 0 0 1 2 2v2'
+                                                }
+                                            ></path>
                                         </svg>
                                     </button>
                                 )}
@@ -557,7 +566,10 @@ export default function NewsList() {
                     }}>
                         <button 
                             disabled={currentPage === 0}
-                            onClick={() => setCurrentPage(currentPage - 1)}
+                            onClick={() => {
+                                setIsLoading(true);
+                                setCurrentPage(currentPage - 1);
+                            }}
                             style={{
                                 background: currentPage === 0 
                                     ? '#F1F5F9' 
@@ -583,7 +595,10 @@ export default function NewsList() {
                         </span>
                         <button 
                             disabled={currentPage === totalPages - 1}
-                            onClick={() => setCurrentPage(currentPage + 1)}
+                            onClick={() => {
+                                setIsLoading(true);
+                                setCurrentPage(currentPage + 1);
+                            }}
                             style={{
                                 background: currentPage === totalPages - 1 
                                     ? '#F1F5F9' 

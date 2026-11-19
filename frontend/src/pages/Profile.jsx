@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
@@ -29,15 +29,10 @@ export default function Profile() {
 
     const navigate = useNavigate();
 
-    useEffect(() => {
-        loadUserData();
-        loadLikedUsers();
-    }, [navigate]);
-
     /**
      * Загружает данные текущего пользователя из сессии.
      */
-    const loadUserData = () => {
+    const loadUserData = useCallback(() => {
         api.get('/auth')
             .then(response => {
                 if (response.data.authenticated) {
@@ -51,16 +46,21 @@ export default function Profile() {
                 }
             })
             .catch(() => navigate('/login'));
-    };
+    }, [navigate]);
 
     /**
      * Загружает список пользователей, которых текущий лайкнул.
      */
-    const loadLikedUsers = () => {
+    const loadLikedUsers = useCallback(() => {
         api.get('/user/liked')
             .then(res => setLikedUsers(res.data))
             .catch(() => {});
-    };
+    }, []);
+
+    useEffect(() => {
+        loadUserData();
+        loadLikedUsers();
+    }, [loadLikedUsers, loadUserData]);
 
     /**
      * Показывает всплывающее уведомление.

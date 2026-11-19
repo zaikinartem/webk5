@@ -126,12 +126,12 @@ public class NewsService {
             );
         }
 
-        if (newsRepository.existsByTitle(title.trim())) {
+        if (newsRepository.existsByTitleExceptId(title.trim(), id)) {
             throw new IllegalArgumentException(
                     "Новость с таким заголовком уже существует."
             );
         }
-        if (newsRepository.existsByContent(content.trim())) {
+        if (newsRepository.existsByContentExceptId(content.trim(), id)) {
             throw new IllegalArgumentException(
                     "Новость с таким текстом уже существует."
             );

@@ -84,7 +84,7 @@ public class AuthService {
         }
 
         String cleanUsername = username.trim();
-        userRepository.save(
+        int userId = userRepository.save(
                 cleanUsername, 
                 password.trim(), 
                 Role.USER.name(), 
@@ -95,6 +95,7 @@ public class AuthService {
         );
 
         User user = new User();
+        user.setId(userId);
         user.setUsername(cleanUsername);
         user.setRole(Role.USER);
         user.setAvatarPath(DEFAULT_AVATAR);

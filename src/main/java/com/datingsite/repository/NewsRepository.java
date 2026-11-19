@@ -41,9 +41,17 @@ public class NewsRepository {
     private static final String SQL_CHECK_TITLE = 
             "SELECT COUNT(*) FROM news WHERE title = ?";
 
+    /** Проверка уникальности заголовка при редактировании. */
+    private static final String SQL_CHECK_TITLE_EXCEPT_ID =
+            "SELECT COUNT(*) FROM news WHERE title = ? AND id <> ?";
+
     /** SQL-запрос для проверки существования по тексту. */
     private static final String SQL_CHECK_CONTENT = 
             "SELECT COUNT(*) FROM news WHERE content = ?";
+
+    /** Проверка уникальности текста при редактировании. */
+    private static final String SQL_CHECK_CONTENT_EXCEPT_ID =
+            "SELECT COUNT(*) FROM news WHERE content = ? AND id <> ?";
 
     /** SQL-запрос для проверки существования по id. */
     private static final String SQL_CHECK_ID = 
@@ -173,6 +181,21 @@ public class NewsRepository {
     }
 
     /**
+     * Проверяет заголовок у других новостей.
+     *
+     * @param title заголовок
+     * @param excludedId ID редактируемой новости
+     * @return true, если такой заголовок уже занят
+     * @throws SQLException при ошибках работы с базой данных
+     */
+    public boolean existsByTitleExceptId(String title, int excludedId)
+            throws SQLException {
+        return existsByFieldAndId(
+                SQL_CHECK_TITLE_EXCEPT_ID, title, excludedId
+        );
+    }
+
+    /**
      * Проверяет, существует ли новость с таким текстом.
      *
      * @param content текст новости
@@ -181,6 +204,21 @@ public class NewsRepository {
      */
     public boolean existsByContent(String content) throws SQLException {
         return existsByField(SQL_CHECK_CONTENT, content);
+    }
+
+    /**
+     * Проверяет текст у других новостей.
+     *
+     * @param content текст новости
+     * @param excludedId ID редактируемой новости
+     * @return true, если такой текст уже занят
+     * @throws SQLException при ошибках работы с базой данных
+     */
+    public boolean existsByContentExceptId(String content, int excludedId)
+            throws SQLException {
+        return existsByFieldAndId(
+                SQL_CHECK_CONTENT_EXCEPT_ID, content, excludedId
+        );
     }
 
     /**
@@ -225,6 +263,27 @@ public class NewsRepository {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, field);
+            ResultSet rs = pstmt.executeQuery();
+            return rs.next() && rs.getInt(1) > 0;
+        }
+    }
+
+    /**
+     * Проверяет поле у записей, кроме указанной.
+     *
+     * @param sql SQL-запрос проверки
+     * @param field значение поля
+     * @param excludedId идентификатор исключаемой записи
+     * @return true, если значение найдено у другой записи
+     * @throws SQLException при ошибках работы с базой данных
+     */
+    private boolean existsByFieldAndId(
+            String sql, String field, int excludedId
+    ) throws SQLException {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, field);
+            pstmt.setInt(2, excludedId);
             ResultSet rs = pstmt.executeQuery();
             return rs.next() && rs.getInt(1) > 0;
         }
